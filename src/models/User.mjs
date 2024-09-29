@@ -19,19 +19,25 @@ export const User = {
             userData.authenticated || false,
             userData.profile_picture || null
 
-        ], (err,user) => {
-          if (err||!user) return callback( err||'Something went wrong try again later')
-          return callback(user,null)
-        })
+        ], (err,res) => {
+          if (err) return callback(err,null)
 
+          const insertedId = res.insertId
+          const query = `SELECT * FROM users WHERE id=?`
+
+          db.query(query, [insertedId], (err,user) => {
+            if (err) return callback(err, null)
+            return callback(null, user[0])
+          })
+        })
     },
 
     findByUsername: (username, callback) => {
         const sql = `SELECT * FROM users WHERE username =?`
 
         db.query(sql, [username], (err, user) => {
-            if (err || !user) return callback(err || 'user not found')
-            return callback(user,null)
+            if (err) return callback(err, null)
+            return callback(null, user[0])
         })
     },
 
@@ -39,8 +45,8 @@ export const User = {
         const sql = `SELECT * FROM users WHERE email =?`
 
         db.query(sql, [email], (err, user) => {
-            if (err || !user) return callback(err || 'user not found')
-            return callback(user,null)
+            if (err) return callback(err, null)
+            return callback(null,user[0])
         })
     },
 
@@ -49,8 +55,8 @@ export const User = {
         const sql = `SELECT * FROM users WHERE id =?`
 
         db.query(sql,[id], (err, user) => {
-            if (err || !user) return callback(err || 'user not found')
-            return callback(user,null)
+            if (err) return callback(err, null)
+            return callback(null,user[0])
         })
     },
 
@@ -59,8 +65,8 @@ export const User = {
         const sql = `SELECT * FROM users WHERE reset_password_token = ?`
 
         db.query(sql,[resetPasswordToken], (err,user) => {
-            if(err||!user) return res.status(400).json({message: 'user not found'})
-            return callback(user,null)
+            if(err) return callback(err, null)
+            return callback(null,user[0])
         })
     },
 
@@ -70,7 +76,7 @@ export const User = {
 
         db.query(sql, [authenticated, id], (err, res) => {
             if (err) return callback(err,null) 
-            return callback(res,null)
+            return callback(null,res)
         })
     },
 
@@ -80,7 +86,7 @@ export const User = {
 
         db.query(sql, [refreshToken,id], (err, res) => {
             if(err) return callback(err, null)
-            return callback(res,null)
+            return callback(null,res)
         })
     },
 
@@ -92,7 +98,7 @@ export const User = {
         `
         db.query(sql,[resetPasswordToken, resetPasswordExpiration, id], (err,res) => {
             if(err) return callback(err, null)
-            return callback(res,null)
+            return callback(null,res)
         })
     },
 
@@ -100,11 +106,9 @@ export const User = {
 
         const sql = `UPDATE users SET password = ? WHERE id = ?`
         db.query(sql, [newPassword, id], (err,res) => {
-            if (err) cpnsole.log('an error occured changing password')
-                return callback(res,null)
+            if (err) return (err, null)
+                return callback(null,res)
         })
     }
 
 }
-
-export default User

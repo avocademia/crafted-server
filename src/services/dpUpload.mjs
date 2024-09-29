@@ -1,62 +1,67 @@
 import multer from 'multer'
 import path from 'path'
 import { fileTypeFromBuffer } from 'file-type'
+import clamscan from '../services/clamscan.mjs'
 
 const scanStorage = multer.memoryStorage()
 
 const storage = multer.diskStorage({
 
-    destination: (callback) => {
+    destination: (cb) => {
         cb(null, 'uploades/profile_pictures')
     },
 
-    fileName: (file,callback) => {
+    fileName: (file,cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        callback(null,file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+        cb(null,file.fieldname + '-' + uniqueSuffix + path.extname(req.file.originalname))
     }
 })
 
 export const scanUpload = multer({
     storage: scanStorage,
     limits: {fileSize: 2*1024*1024}, //2mb
-    fileFilter: async (file, callback) => {
+    fileFilter: async (req, file, cb) => {
+
+        console.log('File details:', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+          });
 
         try {
 
             const buffer = file.buffer
             const {mime} = await fileTypeFromBuffer(buffer)
             if (!mime || ![ 'image/jpeg', 'image/png', 'image/gif'].includes(mime)) {
-                return callback(new Error('Invalid file type. only images allowed'))
+                return cb(new Error('Invalid file type. only images allowed'))
             }
-            callback(null, true)
+            cb(null, true)
 
         } catch (error) {
-            callback(new Error('File type validation failed'))
+            cb(new Error('File type validation failed'))
         }
-
     }
 }).single('profile_picture')
 
-export const upload = multer({
-    storage: storage,
-    limits: {fileSize: 2*1024*1024}, //2mb
-    fileFilter: async (file, callback) => {
+export const finalUpload = async (req,res) => {
 
-        try {
+    console.log(`Fine in final Upload: ${req.file}`)
 
-            const buffer = file.buffer
-            const {mime} = await fileTypeFromBuffer(buffer)
-            if (!mime || ![ 'image/jpeg', 'image/png', 'image/gif'].includes(mime)) {
-                return callback(new Error('Invalid file type. only images allowed'))
-            }
-            callback(null, true)
+    if (req.file) {
 
-        } catch (error) {
-            callback(new Error('File type validation failed'))
+        const isInfected = await clamscan.scanFile(req.file.buffer)
+
+        if (isInfected) {
+            return res.status(400).json({message: 'File rejected due to potential malware'})
         }
 
     }
-}).single('profile_picture')
 
-
-export default {upload, scanUpload}
+    const upload = multer({storage: storage}).single('profile_picture')
+    upload (()=> {
+        if (err){
+            return res.status(500).json({message: 'Error uploading profile picture'})
+        }
+        return res.status(200).json({message: 'Profile picture uploaded successfully'})
+    })
+}

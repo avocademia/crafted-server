@@ -1,38 +1,45 @@
-import nodemailer from "nodemailer"
-import dotenv from 'dotenv'
-import {verificationToken} from "./jwt.mjs"
+import nodemailer from "nodemailer";
+import dotenv from 'dotenv';
+import { verificationToken } from "./jwt.mjs";
 
-dotenv.config()
+dotenv.config();
 
 export const sendVerification = (email, id) => {
-
-    const token = verificationToken({ id, email})
+    const token = verificationToken({ id, email });
+    const craftedEmail = process.env.DEV_EMAIL;
+    const craftedEmailPassword = process.env.DEV_PASSWORD;
+    const emailProvider = process.env.DEV_PROVIDER;
+    const environment = process.env.NODE_ENV;
 
     const transporter = nodemailer.createTransport({
-        service: process.env.DEV_PROVIDER,
+        service: emailProvider,
         auth: {
-            email: process.env.DEV_EMAIL,
-            password: process.env.DEV_PASSWORD
+            user: craftedEmail,
+            pass: craftedEmailPassword
+        },
+        secure: false,
+        tls: {
+            rejectUnauthorized: environment === 'production' ? true : false
         }
-    })
+    });
 
-    const link = `${process.env.DEV_URL}/api/users/verify/${token}`
+    const link = `${process.env.DEV_CLIENT_URL}/api/users/verify/${token}`;
 
     const mailOptions = {
-        from: process.env.DEV_EMAIL,
+        from: craftedEmail,
         to: email,
         subject: 'Account Verification',
-        body: `Click the link to verify your account: ${link}`
-    }
+        text: `Click the link to verify your account: ${link}`
+    };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return reject(error);  // Pass the error back
+            }
+            resolve(info);  // Pass the info back on success
+        });
+    });
+};
 
-        if (error) {
-            return console.log(error)
-        }
-
-        console.log(`Email sent: ${info.response}`)
-    })
-}
-
-export default {sendVerification}
+export default { sendVerification };
