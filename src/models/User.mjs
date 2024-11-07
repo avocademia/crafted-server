@@ -50,13 +50,13 @@ export const User = {
         })
     },
 
-    findUserById: (id, callback) => {
-
-        const sql = `SELECT * FROM users WHERE id =?`
-
-        db.query(sql,[id], (err, user) => {
-            if (err) return callback(err, null)
-            return callback(null,user[0])
+    findUserById: (id) => {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM users WHERE id =?`
+            db.query(sql, [id], (err, user) => {
+                if (err) return reject(err)
+                resolve(user[0])
+            })
         })
     },
 
@@ -109,6 +109,27 @@ export const User = {
             if (err) return (err, null)
                 return callback(null,res)
         })
-    }
+    },
 
+    getAllUsers: (callback) => {
+        const sql = `SELECT * FROM users`
+
+        db.query(sql, (err,users) => {
+            if (err) {
+                return callback(err, null)
+            }
+            return callback(null, users)
+        })
+    },
+
+    updateRole : (newRole, id, callback) => {
+        const sql = `UPDATE users SET role = ? WHERE id = ?`
+
+        db.query(sql, [newRole, id], (err,res) => {
+            if (err) {
+                return callback(err,null)
+            }
+            return callback(null,res)
+        })
+    },
 }

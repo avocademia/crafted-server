@@ -20,7 +20,7 @@ userRouter.get('/verify/:token', verifyVerificationToken, (req,res) => {
     } 
 })
 
-userRouter.post(`/signup`, signup)
+userRouter.post(`/signup`,signup)
 
 userRouter.post(`/signin`, signin)
 

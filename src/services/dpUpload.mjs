@@ -8,7 +8,7 @@ const scanStorage = multer.memoryStorage()
 const storage = multer.diskStorage({
 
     destination: (cb) => {
-        cb(null, 'uploades/profile_pictures')
+        cb(null, 'uploads/profile_pictures')
     },
 
     fileName: (file,cb) => {

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 import validator from 'validator'
 import dotenv from 'dotenv'
 import { User } from '../models/User.mjs'
@@ -14,26 +15,26 @@ import {
 dotenv.config()
 
 export const signup = async (req, res) => {
-    const { first_name, last_name, username, email, password, whatsapp_number } = req.body;
+    const { first_name, last_name, username, email, password, whatsapp_number } = req.body
 
     if (!first_name || !last_name || !username || !email || !whatsapp_number || !password) {
-        return res.status(400).json({ message: 'All fields are required' });
+        return res.status(400).json({ message: 'All fields are required' })
     }
 
-    const sanitizedFirstName = validator.escape(first_name);
-    const sanitizedLastName = validator.escape(last_name);
-    const sanitizedUsername = validator.escape(username);
-    const sanitizedEmail = validator.normalizeEmail(email);
-    const profilePicture = req.file ? `uploads/profile_pictures/${req.file.filename}` : null;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const isFirstAdmin = email === process.env.FIRST_ADMIN_EMAIL;
+    const sanitizedFirstName = validator.escape(first_name)
+    const sanitizedLastName = validator.escape(last_name)
+    const sanitizedUsername = validator.escape(username)
+    const sanitizedEmail = validator.normalizeEmail(email)
+    const profilePicture = req.file ? `uploads/profile_pictures/${req.file.filename}` : null
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const isFirstAdmin = email === process.env.FIRST_ADMIN_EMAIL
 
     if (!validator.isEmail(sanitizedEmail)) {
-        return res.status(401).json({ message: 'Invalid email' });
+        return res.status(401).json({ message: 'Invalid email' })
     }
 
     if (!validator.isStrongPassword(password)) {
-        return res.status(401).json({ message: 'Password must be at least 8 characters long and contain a mix of letters, numbers, and symbols' });
+        return res.status(401).json({ message: 'Password must be at least 8 characters long and contain a mix of letters, numbers, and symbols' })
     }
 
     const userData = {
@@ -46,28 +47,28 @@ export const signup = async (req, res) => {
         role: isFirstAdmin ? 'admin' : 'customer',
         authenticated: isFirstAdmin ? true : false,
         profile_picture: profilePicture
-    };
+    }
 
     User.create(userData, (err, user) => {
         if (err) {
-            return res.status(500).json({ message: `${err}` });
+            return res.status(500).json({ message: `${err}` })
         }
 
         try {
-            sendVerification(userData.email, user.id);
+            sendVerification(userData.email, user.id)
             return res.status(201).json({
                 message: 'Account successfully created! verify email and sign in',
                 user
-            });
+            })
         } catch (error) {
             console.error("Error sending email:", error);  // Log the full error for debugging
             return res.status(500).json({
                 message: `Error occured sending the verification email: ${error.message}`,
                 user
-            });
+            })
         }
-    });
-};
+    })
+}
 
 export const signin = async (req,res) => {
 
@@ -114,8 +115,8 @@ export const signin = async (req,res) => {
             return res.status(401).json({message: 'Invalid credentials'})
         }
 
-        const accessToken = createRefreshToken({id: user.id, role: user.role})
-        const refreshToken = createAccessToken({id: user.id})
+        const accessToken = createAccessToken({id: user.id, role: user.role})
+        const refreshToken = createRefreshToken({id: user.id, role: user.role})
 
         await new Promise((resolve,reject) => {
             User.updateRefreshToken(user.id, refreshToken, (err) => {
@@ -129,7 +130,7 @@ export const signin = async (req,res) => {
             secure: process.env.NODE_ENV === 'production'? true : false,
             path: '/',
             sameSite: 'strict',
-            maxAge: 15*60*1000 //15 min
+            maxAge: 30*24*60*1000 //30days
         })
     
         res.cookie('refreshToken', refreshToken, {
@@ -241,7 +242,97 @@ export const resetPassword = async (req,res) => {
         if (err) return res.status(500).json({message: 'server error updating updating password'})
     })
 
-    res.status(200).json({message: 'Password sucessfully changed!'})
+    return res.status(200).json({message: 'Password sucessfully changed!'})
 }
 
+export const fetchUsers = async (req,res) => {
+    const token = req.cookies.accessToken
+    const ACCESS_SECRET = process.env.ACCESS_SECRET
+    const FIRST_ADMIN_EMAIL = process.env.FIRST_ADMIN_EMAIL
+
+    if (!token) {
+        return res.status(401).json({message: 'Unauthorised, no token provided'})
+    } 
+
+    try {
+
+        const decoded = jwt.verify(token, ACCESS_SECRET)
+        const {id} = decoded
+        const user = User.findUserById(id)
+
+        if (!user) {
+            return res.status(404).json({message: 'user not found'})
+        }
+
+        if (user.email === FIRST_ADMIN_EMAIL) {
+            return res.status(401).json({message: 'user is not authorised to access data'})
+        }
+
+        User.getAllUsers ((err, users) => {
+            if (err) {
+                return res.status(500).json({message: 'error fetching users'})
+            }
+            return res.status(200).json({users: users})
+        })
+        
+    } catch (error) {
+        return res.status(500).json({message: `${error.message}`})
+    }
+}
+
+export const isFirstAdmin = async (req, res) => {
+    const token = req.cookies?.accessToken
+    const ACCESS_SECRET = process.env.ACCESS_SECRET
+    const FIRST_ADMIN_EMAIL = process.env.FIRST_ADMIN_EMAIL
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized request' })
+    }
+
+    try {
+        const decoded = jwt.verify(token, ACCESS_SECRET)
+        const { id } = decoded
+        
+        const user = await User.findUserById(id)
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' })
+        }
+
+        if (user.email === FIRST_ADMIN_EMAIL) {
+            return res.status(200).json({ isFirstAdmin: true })
+        }       
+        return res.status(200).json({ isFirstAdmin: false })
+
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error' })
+    }
+}
+
+export const changeRole = async (req, res) => {
+    const role = req.body.role
+    const id = req.body.id
+    let newRole
+
+    if (role !== 'customer' && role !== 'admin') {
+        return res.status(400).json({message: 'bad request'})
+    }
+
+    if (role === 'customer') {
+        newRole = 'admin'
+    } else {
+        newRole = 'customer'
+    }
+
+    try {
+        User.updateRole(newRole, id, (err, result) =>{
+            if (err) {
+                return res.status(500).json({message: `Internal Server Error`})
+            }
+            return res.status(200).json({message: `Role Change Successful`})
+        })
+    } catch (error) {
+        return res.status(500).json({message: `${error.message}`})
+    }
+}
 
