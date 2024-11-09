@@ -281,7 +281,7 @@ export const fetchUsers = async (req,res) => {
 }
 
 export const isFirstAdmin = async (req, res) => {
-    const token = req.cookies?.accessToken
+    const token = req.cookies?.accessToken || req.accessToken
     const ACCESS_SECRET = process.env.ACCESS_SECRET
     const FIRST_ADMIN_EMAIL = process.env.FIRST_ADMIN_EMAIL
 

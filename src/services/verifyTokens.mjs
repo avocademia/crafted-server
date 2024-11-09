@@ -25,6 +25,8 @@ export const verifyTokens = async (req, res , next) => {
     
                     const { id, role } = decodedRefresh;
                     const newAccessToken = createAccessToken({id: id,role: role})
+
+                    newAccessToken = req.accessToken
     
                     res.cookie('accessToken', newAccessToken, {
                         httpOnly: true,
@@ -43,6 +45,6 @@ export const verifyTokens = async (req, res , next) => {
             }   
         })
     } catch (error) {
-        return res.status(500).json({message: `${error.message}`})
+        return res.status(500).json({message: `Token error`})
     }
 }
