@@ -8,7 +8,7 @@ const connection = mysql.createConnection({
    user: process.env.DEV_USER,
    password: '',
    database: 'crafted'
-}, console.log(process.env.DEV_HOST))
+})
 
 connection.connect((err) => {
    if (err) console.log(err)

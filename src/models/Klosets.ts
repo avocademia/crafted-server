@@ -1,8 +1,10 @@
-import db from '../config/db.mjs'
+import { MysqlError } from 'mysql'
+import db from '../config/db'
+import { CreateKlosetData, KlosetData, RawKlosetData } from '../types'
 
 export const Kloset = {
 
-    create: (klosetData, callback) => {
+    create: (klosetData:CreateKlosetData, callback:(err:MysqlError|null, kloset:KlosetData|null) => void) => {
         const sql = `INSERT INTO kloset 
         (name,slogan,address,type,category,
         delivery,user_id,dp,delivery_time,active,status)
@@ -33,7 +35,7 @@ export const Kloset = {
         })
     },
 
-    findKlosetById: (id, callback) => {
+    findKlosetById: (id:number, callback:(err:MysqlError|null, kloset:KlosetData|null) => void) => {
         const sql = `SELECT * FROM kloset WHERE id=?`
 
         db.query(sql, [id], (err,kloset) => {
@@ -44,7 +46,7 @@ export const Kloset = {
         })
     },
 
-    findKlosetsByUserId: (userId, callback) => {
+    findKlosetsByUserId: (userId:number, callback:(err:MysqlError|null, kloset:KlosetData[]|null) => void) => {
         const sql = `
                         SELECT k.*, 
                         (
@@ -57,18 +59,23 @@ export const Kloset = {
                         WHERE k.user_id = ?
                     `
     
-        db.query(sql, [userId], (err,res) => {
-            if (err) {
+        db.query(sql, [userId], (err,klosets:KlosetData[]|null) => {
+            if (err|| !klosets) {
                 return callback (err,null)
-            }
+            } else {
+                    /*klosets.forEach(kloset => {
 
-            res.forEach(kloset => {
-                kloset.followers = kloset.followers ? kloset.followers.split(', ').map(f => {
-                    const [followerId, username] = f.split(':')
-                    return { followerId, username }
-                }) : []
-            })
-            return callback(null,res)
+                        if (typeof kloset.followers === 'string') {
+                            kloset.followers = kloset.followers ? kloset.followers.split(', ').map(f => {
+                            const [followerId, username] = f.split(':')
+                            return { followerId, username }
+                            }) : []
+                            return callback(null, klosets)
+                        }
+                        
+                    })*/
+                    return callback(null, klosets)
+            }    
         })
     },
 }

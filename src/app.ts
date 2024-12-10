@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
-import userRouter from './routes/userRouter.mjs'
-import { adminRouter } from "./routes/adminRouter.mjs"
+import userRouter from './routes/userRouter'
+import { adminRouter } from "./routes/adminRouter"
 
 dotenv.config()
 
