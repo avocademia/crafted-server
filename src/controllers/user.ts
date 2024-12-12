@@ -127,6 +127,7 @@ export const signin = async (req:Request, res:Response) => {
         res.status(200).json({
 
             user: {
+                id: foundUser.id,
                 first_name: foundUser.first_name,
                 username: foundUser.username,
                 role: foundUser.role,

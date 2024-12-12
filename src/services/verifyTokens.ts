@@ -3,15 +3,11 @@ import dotenv from 'dotenv'
 import { createAccessToken } from "./jwt"
 import { Request, Response, NextFunction } from "express"
 import { User } from "../models/User"
+import { ReqWithAcst } from "../types"
 
 dotenv.config()
 
-interface verReq extends Request {
-    accessToken?:string,
-    userId?: number
-}
-
-export const verifyTokens = async (req:verReq, res:Response , next:NextFunction) => {
+export const verifyTokens = async (req:ReqWithAcst, res:Response , next:NextFunction) => {
 
     const accessToken = req.cookies.accessToken as string
     const accessSecret = process.env.ACCESS_SECRET as Secret

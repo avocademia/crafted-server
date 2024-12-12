@@ -189,3 +189,8 @@ declare global {
         }
     }
 }
+
+export interface ReqWithAcst extends RequestWithParams {
+    accessToken?:string,
+    userId?: number
+}
