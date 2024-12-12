@@ -107,3 +107,19 @@ export const fetchSingleKloset = async (req:Request, res:Response) => {
         res.status(500).json({message: `unknown error occured fetching kloset`})
     }
 }
+
+export const getAllKlosets = async (req:Request,res:Response) => {
+
+    try {
+        Kloset.getAllKlosets((err,klosets) => {
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+            if (klosets && !err) {
+                res.status(200).json({klosets})
+            }  
+        })
+    } catch (error) {
+        res.status(500).json({error: 'unexprected server error'})
+    }
+}

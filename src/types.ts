@@ -51,10 +51,6 @@ export interface UploadedFile {
     stream?: Stream
 }
 
-export type KlosetFollowers = {
-
-}
-
 export type KlosetData = {
     id: number,
     name: string,
@@ -69,8 +65,8 @@ export type KlosetData = {
     type: ProductType,
     dp: string|null,
     created_at: Date,
-    banner: string,
-    followers: string|Array<{ followerId: string; username: string }>,
+    banner: string|null,
+    followers: string[]|null,
 }
 
 export type RawKlosetData = {
@@ -87,8 +83,8 @@ export type RawKlosetData = {
     type: ProductType,
     dp: string|null,
     created_at: Date,
-    banner: string,
-    followers: string,
+    banner: string|null,
+    followers: string|null,
 }
 
 export type CreateKlosetData = {

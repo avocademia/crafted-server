@@ -78,4 +78,29 @@ export const Kloset = {
             }    
         })
     },
+
+    getAllKlosets: (callback:(err: MysqlError|null, klosets: KlosetData[]|null)=>void) => {
+
+        const sql = `SELECT k.*,
+                     GROUP_CONCAT(DISTINCT kf.user_id) AS followers
+                     FROM kloset k
+                     LEFT JOIN kloset_followers kf ON k.id = kf.kloset_id
+                     GROUP BY k.id
+                    `
+        
+        db.query(sql, (err,klosets:RawKlosetData[]|null) => {
+            if (err) {
+                callback(err,null)
+            }
+
+            if (klosets) {
+                const finalKlosets = klosets.map(kloset => ({
+                    ...kloset,
+                    followers: typeof kloset.followers ==='string'? kloset.followers.split(','):null
+                }))
+                callback(null,finalKlosets)
+            }
+            
+        })
+    }
 }
