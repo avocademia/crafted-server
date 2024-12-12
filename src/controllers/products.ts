@@ -12,6 +12,11 @@ import fs from 'fs'
 import { MulterRequest, RequestWithParams, Category, ProductCondition } from "../types"
 import { Request, Response } from "express"
 import { promisify } from "util"
+const asyncUnlink = promisify(fs.unlink)
+
+interface DeleteRequestBody {
+    path?: string;
+}
 
 export const addProduct = async (req:MulterRequest,res:Response) => {
 
@@ -296,12 +301,6 @@ export const sendProductPath = async (req:MulterRequest,res:Response) => {
     }
 }
 
-interface DeleteRequestBody {
-    path?: string;
-}
-
-const asyncUnlink = promisify(fs.unlink)
-
 export const deleteDigitalProduct = async (req:Request, res:Response) => {
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = path.dirname(__filename) 
@@ -475,5 +474,63 @@ export const getSingleProduct = async (req:RequestWithParams, res:Response) => {
         } catch (error) {
             res.status(500).json({error: `unknown error occured fetching product`})
         }                          
+    }
+}
+
+export const getAllProducts = async (req:Request, res:Response) => {
+
+    let allProducts = []
+
+    try {
+
+        RetailProducts.getAllProducts((err,retailProducts) => {
+
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+
+            if (retailProducts){
+    
+                CustomProducts.getAllProducts((err, customProducts) => {
+
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+
+                    if (customProducts) {
+    
+                        DigitalProducts.getAllProducts((err,digitalProducts) => {
+
+                            if (err) {
+                                res.status(500).json({error: 'database error'})
+                            }
+                            
+                            if (digitalProducts) {
+    
+                                Books.getAllProducts((err, books) => {
+
+                                    if (err) {
+                                        res.status(500).json({error: 'database error'})
+                                    }
+    
+                                    if (books) {
+                                        allProducts = [
+                                            ...digitalProducts, 
+                                            ...customProducts,
+                                            ...retailProducts,
+                                            ...books
+                                        ]
+                                        res.status(200).json({products: allProducts})
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+            }
+        })
+        
+    } catch (error) {
+        res.status(500).json({error: 'unexpected error fetching products'})
     }
 }

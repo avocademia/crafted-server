@@ -4,7 +4,8 @@ import cors from 'cors'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import userRouter from './routes/userRouter'
-import { adminRouter } from "./routes/adminRouter"
+import adminRouter from "./routes/adminRouter"
+import publicRouter from "./routes/publicRouter"
 
 dotenv.config()
 
@@ -23,6 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use('/api/admins', adminRouter)
 app.use('/api/users', userRouter)
+app.use('/api', publicRouter)
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {

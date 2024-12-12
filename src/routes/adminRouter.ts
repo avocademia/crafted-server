@@ -21,9 +21,8 @@ import {
        } from "../controllers/products"
 import { uploadDigitalFile } from "../services/uploadDigitalFile"
 import { uploadProductPhotos } from "../services/uploadProductPhotos"
-import { MulterRequest } from "../types"
 
-export const adminRouter = express.Router()
+const adminRouter = express.Router()
 
 adminRouter.post('/add-kloset', verifyTokens, (req:Request,res:Response,next:NextFunction) => {
     uploadKlosetDp(req, res, (err) => {
@@ -60,3 +59,5 @@ adminRouter.post('/save-digital-product',verifyTokens, (req:Request,res:Response
         })
 }, sendProductPath )
 adminRouter.post('/delete-digital-product',verifyTokens, deleteDigitalProduct)
+
+export default adminRouter

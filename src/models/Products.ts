@@ -1,7 +1,20 @@
 import { MysqlError, Types } from 'mysql'
 import db from '../config/db'
 import { Book, Category, CustomProduct, DigitalProduct, ProductCondition, ProductPathData, ProductType, RetailProduct } from '../types'
-import { deleteDigitalProduct } from '../controllers/products';
+
+interface RawRP {
+    id: number;
+    kloset_id: number,
+    name: string,
+    description: string,
+    cost: number,
+    sold_out: boolean,
+    quantity: number,
+    photos: string,
+    category: Category|null,
+    sub_category: string,
+    product_condition: ProductCondition
+}
 
 interface FinalRetailProduct {
     insertId?: number,
@@ -18,6 +31,23 @@ interface FinalRetailProduct {
     photos: string[];
 }
 
+interface ShopRP extends FinalRetailProduct {
+    type: 'retail'
+}
+
+interface RawCP {
+    id: number;
+    kloset_id: number,
+    name: string,
+    description: string,
+    cost: number,
+    active: boolean,
+    production_time: number,
+    photos: string,
+    category: Category|null,
+    sub_category: string
+}
+
 interface FinalCustomProduct {
     insertId?: number,
     id: number,
@@ -32,6 +62,21 @@ interface FinalCustomProduct {
     photos: string[]
 }
 
+interface ShopCP extends FinalCustomProduct{
+    type: 'custom'
+}
+
+interface RawDP {
+    id: number;
+    kloset_id: number,
+    name: string,
+    description: string,
+    cost: number,
+    active: boolean,
+    path: string,
+    photos: string
+}
+
 interface FinalDigitalProduct {
     insertId?: number,
     id: number,
@@ -42,6 +87,24 @@ interface FinalDigitalProduct {
     active: boolean,
     path: string,
     photos: string[]
+}
+
+interface ShopDP extends FinalDigitalProduct {
+    type: 'digital'
+}
+
+interface RawBook  {
+    id: number;
+    kloset_id: number;
+    name: string;
+    summary: string;
+    cost: number;
+    quantity: number;
+    sold_out: boolean;
+    book_condition: ProductCondition;
+    author: string;
+    photos: string;
+    genre: string;
 }
 
 interface FinalBook {
@@ -59,6 +122,23 @@ interface FinalBook {
     genre: string[]
 }
 
+interface ShopBook extends FinalBook {
+    type: 'books'
+}
+
+interface ProductPhotos {
+    id?: number,
+    product_id?: number,
+    product_type: ProductType,
+    path: string
+}
+
+interface GenreTable {
+    value: string,
+    book?: number
+}
+
+
 export const RetailProducts = {
     
     create: (productData: RetailProduct, callback:(err:MysqlError|null, product:FinalRetailProduct|null) => void) => {
@@ -75,48 +155,6 @@ export const RetailProducts = {
                 return callback(err,null)
             }
             return callback(null,product)
-        })
-    },
-
-    getAllProducts: (callback:(err:MysqlError|null, products:FinalRetailProduct[]|null) => void) => {
-        const sql = `SELECT rp.*, pp.path AS photo_path
-                     FROM retail_products rp
-                     LEFT JOIN product_photos pp ON rp.id == pp.product_id
-                     WHERE pp.product_type = 'retail'
-                    `
-        
-        db.query(sql, (err: MysqlError|null, result:RetailProduct[]) => {
-            if (err) {
-                return callback(err,null)
-            }
-
-            const products = result.reduce<Record<number,FinalRetailProduct>>((acc,row) => {
-                const {
-                    id,name,description,cost,
-                    quantity,category,sub_category,
-                    kloset_id,product_condition,sold_out,
-                    photo_path
-                } = row
-
-                if (!id) {
-                    return acc
-                }
-
-                if (!acc[id]) {
-                    acc[id] = {id,name,description,cost,
-                        quantity,category,sub_category,
-                        kloset_id,product_condition,sold_out,
-                        photos: []}
-                }
-
-                if (photo_path) {
-                    acc[id].photos.push(photo_path)
-                }
-                return acc
-            }, {})
-
-            const productList = Object.values(products)
-            return callback(err,productList)
         })
     },
 
@@ -174,20 +212,6 @@ export const RetailProducts = {
             p.quantity, p.sold_out, p.category, p.sub_category, p.product_condition
         `
     
-        interface RawRP {
-                id: number;
-                kloset_id: number,
-                name: string,
-                description: string,
-                cost: number,
-                sold_out: boolean,
-                quantity: number,
-                photos: string,
-                category: Category|null,
-                sub_category: string,
-                product_condition: ProductCondition
-        }
-    
         db.query(sql, [product_id], (err: MysqlError | null, result: RawRP[] | null) => {
             if (err || !result) {
                 return callback(err, null);
@@ -210,7 +234,37 @@ export const RetailProducts = {
             }
             callback(null,finalRP)
         })
-    }      
+    } ,
+
+    getAllProducts: (callback:(err: MysqlError|null, product: ShopRP[]|null) => void)   => {
+
+        const sql = `
+                    SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.sold_out, p.quantity,p.category, p.sub_category,p.product_condition, 
+                    GROUP_CONCAT(DISTINCT pp.path) AS photos 
+                    FROM retail_products p
+                    LEFT JOIN product_photos pp ON p.id = pp.product_id
+                    WHERE pp.product_type = 'retail'
+                    GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.quantity, p.sold_out, p.category, p.sub_category, p.product_condition
+                    `
+        
+        db.query(sql, (err: MysqlError|null, rawProducts: RawRP[]|null) => {
+            if (err) {
+                return callback(err,null)
+            }
+
+            if (rawProducts) {
+               const finalProducts:ShopRP[] = rawProducts?.map(product => ({
+                    ...product,
+                    type: 'retail',
+                    photos: product.photos.split(',')
+                })) 
+
+                return callback(null, finalProducts)
+            }
+        })
+    }
 }
 
 export const CustomProducts = {
@@ -290,19 +344,6 @@ export const CustomProducts = {
             p.production_time, p.active, p.category, p.sub_category
         `
     
-        interface RawCP {
-                id: number;
-                kloset_id: number,
-                name: string,
-                description: string,
-                cost: number,
-                active: boolean,
-                production_time: number,
-                photos: string,
-                category: Category|null,
-                sub_category: string
-        }
-    
         db.query(sql, [product_id], (err: MysqlError | null, result: RawCP[] | null) => {
             if (err || !result) {
                 return callback(err, null);
@@ -324,7 +365,37 @@ export const CustomProducts = {
             }
             callback(null,finalCP)
         })
-    }      
+    } ,
+    
+    getAllProducts: (callback:(err: MysqlError|null, product: ShopCP[]|null) => void)   => {
+
+        const sql = `
+                    SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.active, p.production_time,p.category, p.sub_category, 
+                    GROUP_CONCAT(DISTINCT pp.path) AS photos 
+                    FROM custom_products p
+                    LEFT JOIN product_photos pp ON p.id = pp.product_id
+                    WHERE pp.product_type = 'custom'
+                    GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.production_time, p.active, p.category, p.sub_category
+                    `
+        
+        db.query(sql, (err: MysqlError|null, rawProducts: RawCP[]|null) => {
+            if (err) {
+                callback(err,null)
+            }
+
+            if (rawProducts) {
+                const finalProducts:ShopCP[] = rawProducts?.map(product => ({
+                     ...product,
+                     type: 'custom',
+                     photos: product.photos.split(',')
+                 })) 
+ 
+                 return callback(null, finalProducts)
+             }
+        })
+    }
 }
 
 export const DigitalProducts = {
@@ -413,18 +484,7 @@ export const DigitalProducts = {
             GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
             p.path, p.active
         `
-    
-        interface RawDP {
-                id: number;
-                kloset_id: number,
-                name: string,
-                description: string,
-                cost: number,
-                active: boolean,
-                path: string,
-                photos: string
-        }
-    
+
         db.query(sql, [product_id], (err: MysqlError | null, result: RawDP[] | null) => {
             if (err || !result) {
                 return callback(err, null);
@@ -444,7 +504,37 @@ export const DigitalProducts = {
             }
             callback(null,finalDP)
         })
-    }      
+    } ,
+    
+    getAllProducts: (callback:(err: MysqlError|null, product: ShopDP[]|null) => void)   => {
+
+        const sql = `
+                    SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.active, p.path, 
+                    GROUP_CONCAT(DISTINCT pp.path) AS photos 
+                    FROM digital_products p
+                    LEFT JOIN product_photos pp ON p.id = pp.product_id
+                    WHERE pp.product_type = 'digital'
+                    GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
+                    p.active, p.path
+                    `
+        
+        db.query(sql, (err: MysqlError|null, rawProducts: RawDP[]|null) => {
+            if (err) {
+                callback(err,null)
+            }
+
+            if (rawProducts) {
+                const finalProducts:ShopDP[] = rawProducts?.map(product => ({
+                     ...product,
+                     type: 'digital',
+                     photos: product.photos.split(',')
+                 })) 
+ 
+                 return callback(null, finalProducts)
+             }
+        })
+    }
 }
 
 export const Books = {
@@ -528,22 +618,7 @@ export const Books = {
             b.quantity, b.sold_out, b.book_condition
         `
     
-        interface SingleBookProp  {
-                id: number;
-                kloset_id: number;
-                name: string;
-                summary: string;
-                cost: number;
-                quantity: number;
-                sold_out: boolean;
-                book_condition: ProductCondition;
-                author: string;
-                photos?: string;
-                photo_path?: string;
-                genre?: string;
-        }
-    
-        db.query(sql, [product_id], (err: MysqlError | null, result: SingleBookProp[] | null) => {
+        db.query(sql, [product_id], (err: MysqlError | null, result: RawBook[] | null) => {
             if (err || !result) {
                 return callback(err, null);
             }
@@ -566,7 +641,39 @@ export const Books = {
             callback(null,finalBook)
             
         })
-    }      
+    },
+    
+    getAllProducts: (callback:(err: MysqlError|null, product: ShopBook[]|null) => void)   => {
+
+        const sql = `
+                    SELECT b.id, b.name, b.author, b.summary, b.cost, b.kloset_id, 
+                    b.sold_out, b.book_condition, b.quantity, 
+                    GROUP_CONCAT(DISTINCT pp.path) AS photos ,
+                    GROUP_CONCAT(DISTINCT bg.genre) AS genre
+                    FROM books b
+                    LEFT JOIN product_photos pp ON b.id = pp.product_id
+                    LEFT JOIN book_genres bg ON b.id = bg.book
+                    WHERE pp.product_type = 'books'
+                    GROUP BY b.id, b.name, b.author, b.summary, b.cost, b.kloset_id, 
+                    b.sold_out, b.book_condition, b.quantity
+                    `
+        
+        db.query(sql, (err: MysqlError|null, rawProducts: RawBook[]|null) => {
+            if (err) {
+                callback(err,null)
+            }
+
+            if (rawProducts) {
+                const finalProducts:ShopBook[] = rawProducts?.map(product => ({
+                     ...product,
+                     type: 'books',
+                     genre: product.genre.split(','),
+                     photos: product.photos.split(',')
+                 })) 
+                 return callback(null, finalProducts)
+             }
+        })
+    }
 }
 
 export const ProductPath = {
@@ -609,13 +716,6 @@ export const ProductPath = {
     }
 }
 
-interface ProductPhotos {
-    id?: number,
-    product_id?: number,
-    product_type: ProductType,
-    path: string
-}
-
 export const ProductPhotos = {
     
     addMultiple: (photos: ProductPhotos[], callback:(err:MysqlError|null, res: null) => void) => {
@@ -633,11 +733,6 @@ export const ProductPhotos = {
             return
         })
     }
-}
-
-interface GenreTable {
-    value: string,
-    book?: number
 }
 
 export const BookGenres = {
