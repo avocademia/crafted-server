@@ -177,7 +177,10 @@ export interface RequestWithParams extends Request {
     params: {
         kloset_id?: string,
         type?: string,
-        product_id?: string
+        product_id?: string,
+        cart_item_id?: string,
+        new_cost?: string,
+        new_quantity: string
     }
 }
 
