@@ -99,4 +99,18 @@ export const Cart = {
             }
         })
     },
+
+    getFullCart: (userId:number, callback:(err:MysqlError|null, items:ItemData[]|null)=>void) => {
+
+        const sql = `SELECT * FROM cart_items WHERE user_id = ?`
+
+        db.query(sql, userId, (err,items) => {
+            if (err) {
+                callback(err,null)
+            }
+            if (items) {
+                callback(null,items)
+            }
+        })
+    },
 }

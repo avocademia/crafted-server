@@ -142,3 +142,28 @@ export const verifyItem = async (req:ReqWithAcst,res:Response) => {
     }
 }
 
+export const getUserCart = async (req:ReqWithAcst,res:Response) => {
+
+    const userId = req.userId
+
+    if (userId) {
+        try {
+            Cart.getFullCart(userId, (err,items) => {
+
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+                if (items){
+                    res.status(200).json({items})
+                }
+                if (!err && !items) {
+                    res.status(200)
+                }
+                
+            })
+        } catch (error) {
+            res.status(500).json({error: 'unexpected server error'})
+        }
+    }
+}
+
