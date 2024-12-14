@@ -6,6 +6,11 @@ import cookieParser from 'cookie-parser'
 import userRouter from './routes/userRouter'
 import adminRouter from "./routes/adminRouter"
 import publicRouter from "./routes/publicRouter"
+import path from "path"
+import { fileURLToPath } from "url"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 dotenv.config()
 
@@ -22,6 +27,7 @@ app.use(cors({
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 app.use('/api/admins', adminRouter)
 app.use('/api/users', userRouter)
 app.use('/api', publicRouter)

@@ -23,7 +23,7 @@ export const addItem = async (req:ReqWithAcst, res:Response) => {
                 user_id: req.userId ,
                 product_id: data.product_id,
                 product_name: validator.escape(data.product_name),
-                photo_path: validator.escape(data.photo_path),
+                item_quantity: 1,
                 quantity: data.quantity? data.quantity:0,
                 sold_out: false,
                 active_status: true,

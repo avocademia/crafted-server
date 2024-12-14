@@ -7,12 +7,12 @@ export type ItemData = {
     user_id: number,
     product_id: number,
     product_name: string,
-    photo_path: string,
     quantity?: number,
     sold_out: boolean,
     active_status: boolean,
     cost: number,
     product_type: ProductType,
+    item_quantity: number,
 }
 
 export const Cart = {
@@ -28,19 +28,20 @@ export const Cart = {
                         sold_out,
                         active_status,
                         cost,
-                        product_type
+                        product_type,
+                        item_quantity
                      ) VALUES (?,?,?,?,?,?,?,?,?)`
     
         db.query(sql, [
             item_data.user_id,
             item_data.product_id,
             item_data.product_name,
-            item_data.photo_path,
             item_data.quantity,
             item_data.sold_out,
             item_data.active_status,
             item_data.cost,
             item_data.product_type,
+            item_data.item_quantity
         ], (err) => {
             if (err) {
                 return callback(err)
