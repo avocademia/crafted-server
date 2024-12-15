@@ -30,7 +30,10 @@ export const Kloset = {
 
             db.query(query, [id], (err,kloset) => {
                 if (err) return callback(err,null)
+
+                if (kloset && !err) {
                     return callback(null,kloset[0])
+                }      
             })
         })
     },
@@ -42,7 +45,9 @@ export const Kloset = {
             if (err) {
                 return callback(err,null)
             }
-            return callback(null,kloset)
+            if (kloset && !err) {
+                return callback(null,kloset)
+            }
         })
     },
 
@@ -59,22 +64,17 @@ export const Kloset = {
                         WHERE k.user_id = ?
                     `
     
-        db.query(sql, [userId], (err,klosets:KlosetData[]|null) => {
+        db.query(sql, [userId], (err,klosets:RawKlosetData[]|null) => {
             if (err|| !klosets) {
                 return callback (err,null)
-            } else {
-                    /*klosets.forEach(kloset => {
-
-                        if (typeof kloset.followers === 'string') {
-                            kloset.followers = kloset.followers ? kloset.followers.split(', ').map(f => {
-                            const [followerId, username] = f.split(':')
-                            return { followerId, username }
-                            }) : []
-                            return callback(null, klosets)
-                        }
-                        
-                    })*/
-                    return callback(null, klosets)
+            } 
+            
+            if (klosets && !err) {
+                    const finalKloset = klosets.map (kloset => ({
+                        ...kloset,
+                        followers: kloset.followers? kloset.followers.split(',') : null,
+                    }))
+                    return callback(null, finalKloset)
             }    
         })
     },
@@ -93,7 +93,7 @@ export const Kloset = {
                 callback(err,null)
             }
 
-            if (klosets) {
+            if (klosets && !err) {
                 const finalKlosets = klosets.map(kloset => ({
                     ...kloset,
                     followers: typeof kloset.followers ==='string'? kloset.followers.split(','):null
