@@ -46,7 +46,7 @@ export const Kloset = {
                 return callback(err,null)
             }
             if (kloset && !err) {
-                return callback(null,kloset)
+                return callback(null,kloset[0])
             }
         })
     },

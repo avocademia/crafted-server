@@ -18,12 +18,10 @@ export type ItemData = {
 export const Cart = {
     add: (item_data:ItemData, callback:(err:MysqlError|null) => void) => {
 
-        console.log(item_data)
         const sql = `INSERT INTO cart_items (
                         user_id,
                         product_id,
                         product_name,
-                        photo_path,
                         quantity,
                         sold_out,
                         active_status,

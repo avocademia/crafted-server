@@ -32,7 +32,7 @@ export const addItem = async (req:ReqWithAcst, res:Response) => {
             }
             Cart.add(sanitizedItemData, (err) => {
                 if (err){
-                    res.status(500).json({error: err.message})
+                    res.status(500).json({error: 'database error'})
                 }
             })
         } catch (error) {

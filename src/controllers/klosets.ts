@@ -3,7 +3,7 @@ import { Kloset } from "../models/Klosets"
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { Response, Request } from "express"
-import {KlosetStatus, MulterRequest } from "../types"
+import {KlosetStatus} from "../types"
 
 dotenv.config()
 
@@ -13,19 +13,19 @@ export const createKloset = async (req:Request ,res:Response) => {
         const {name,slogan,type,category,address,delivery,delivery_time,user_id} = req.body
 
     if (!name||!slogan||!type||!category||!address||!delivery||!delivery_time||!user_id) {
-        res.status(400).json({message: "All fields are required"})
+        res.status(400).json({error: "All fields are required"})
     }
     
     if (!name || !slogan || !type || !category || !address || !delivery || !delivery_time || !user_id) {
-        res.status(400).json({ message: "All fields are required" });
+        res.status(400).json({ error: "All fields are required" });
     }
 
     if (type !== 'custom' && type !== 'retail' && type !== 'digital' && type !== 'books') {
-        res.status(400).json({ message: 'Invalid type' });
+        res.status(400).json({ error: 'Invalid type' });
     }
     
     if (category !== 'apparel' && category !== 'jewellery' && category !== 'decor' && category !== 'books' && category !== 'select' && category === undefined) {
-        res.status(400).json({ message: 'Invalid category' })
+        res.status(400).json({ error: 'Invalid category' })
     }
     const deliveryBoolean = delivery === 'true'
     const sanitizedName = validator.escape(name)
@@ -49,12 +49,12 @@ export const createKloset = async (req:Request ,res:Response) => {
 
     Kloset.create(klosetData, (err,kloset) => {
         if (err) {
-            res.status(500).json({message: 'Error creating kloset'})
+            res.status(500).json({error: 'Error creating kloset'})
         }
         res.status(201).json({message: "Kloset successfully created", kloset})
     }) 
     } catch (error) {
-        res.status(500).json({message: `unknown error occured creating kloset`})
+        res.status(500).json({error: `unknown error occured creating kloset`})
 
     }
 }
@@ -64,7 +64,7 @@ export const klosetsByUserId = async (req: Request, res: Response) => {
     const accessSecret = process.env.ACCESS_SECRET as Secret
 
     if (!token) {
-        res.status(401).json({ message: "Unauthorized access" })
+        res.status(401).json({ error: "Unauthorized access" })
     }
 
     try {
@@ -74,17 +74,17 @@ export const klosetsByUserId = async (req: Request, res: Response) => {
 
         Kloset.findKlosetsByUserId(userId, (err, klosets) => {
             if (err) {
-                res.status(500).json({ message: "Error fetching klosets" })
+                res.status(500).json({ error: "Error fetching klosets" })
             }
 
             if (klosets) {
                 res.status(200).json({ klosets })
             } else {
-                res.status(404).json({ message: "No klosets found" })
+                res.status(404).json({ error: "No klosets found" })
             }
         })
     } catch (error) {
-        res.status(400).json({ message: "Invalid token" })
+        res.status(400).json({ error: "Invalid token" })
     }
 }
 
@@ -93,18 +93,20 @@ export const fetchSingleKloset = async (req:Request, res:Response) => {
     
     try {
         Kloset.findKlosetById(parseInt(id), (err, kloset) => {
+
             if (err) {
-                res.status(500).json({message: 'database error fetching kloset'})
+                res.status(500).json({error: 'database error fetching kloset'})
             }
-
-            if (!kloset) {
-                res.status(494).json({message: 'kloset not found'})
+            if (!kloset && !err) {
+                res.status(404).json({error: 'kloset not found'})
             }
-
-            res.status(200).json({kloset: kloset})
+            if (kloset) {
+                res.status(200).json({kloset: kloset})
+            }
+            
         })
     } catch (error) {
-        res.status(500).json({message: `unknown error occured fetching kloset`})
+        res.status(500).json({error: `unknown error occured fetching kloset`})
     }
 }
 

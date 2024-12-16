@@ -16,23 +16,20 @@ interface RawRP {
     product_condition: ProductCondition
 }
 
-interface FinalRetailProduct {
+interface FinalRP {
     insertId?: number,
-    id: number;
-    name: string;
-    description: string;
-    cost: number;
-    quantity: number;
-    category: Category|null;
-    sub_category: string;
-    kloset_id: number;
-    product_condition: ProductCondition;
-    sold_out: boolean;
-    photos: string[];
-}
-
-interface ShopRP extends FinalRetailProduct {
-    type: 'retail'
+    id: number,
+    name: string,
+    description: string,
+    cost: number,
+    quantity: number,
+    category: Category|null,
+    sub_category: string,
+    kloset_id: number,
+    product_condition: ProductCondition,
+    sold_out: boolean,
+    photos: string[],
+    type: ProductType
 }
 
 interface RawCP {
@@ -48,7 +45,7 @@ interface RawCP {
     sub_category: string
 }
 
-interface FinalCustomProduct {
+interface FinalCP {
     insertId?: number,
     id: number,
     kloset_id: number,
@@ -59,11 +56,8 @@ interface FinalCustomProduct {
     active: boolean,
     category: Category|null,
     sub_category: string,
-    photos: string[]
-}
-
-interface ShopCP extends FinalCustomProduct{
-    type: 'custom'
+    photos: string[],
+    type: ProductType
 }
 
 interface RawDP {
@@ -77,7 +71,7 @@ interface RawDP {
     photos: string
 }
 
-interface FinalDigitalProduct {
+interface FinalDP {
     insertId?: number,
     id: number,
     kloset_id: number,
@@ -86,11 +80,8 @@ interface FinalDigitalProduct {
     cost: number,
     active: boolean,
     path: string,
-    photos: string[]
-}
-
-interface ShopDP extends FinalDigitalProduct {
-    type: 'digital'
+    photos: string[],
+    type: ProductType
 }
 
 interface RawBook  {
@@ -118,12 +109,9 @@ interface FinalBook {
     sold_out: boolean,
     book_condition: ProductCondition,
     author: string,
-    photos: string[]
-    genre: string[]
-}
-
-interface ShopBook extends FinalBook {
-    type: 'books'
+    photos: string[],
+    genre: string[],
+    type: ProductType
 }
 
 interface ProductPhotos {
@@ -141,7 +129,7 @@ interface GenreTable {
 
 export const RetailProducts = {
     
-    create: (productData: RetailProduct, callback:(err:MysqlError|null, product:FinalRetailProduct|null) => void) => {
+    create: (productData: RetailProduct, callback:(err:MysqlError|null, product: FinalRP|null) => void) => {
         const sql = `INSERT INTO retail_products 
         (name,description,cost,quantity,category,
         sub_category,product_condition,kloset_id)
@@ -152,13 +140,16 @@ export const RetailProducts = {
 
         db.query(sql, values, (err,product) => {
             if (err) {
-                return callback(err,null)
+                return callback(err, null)
             }
-            return callback(null,product)
+
+            if (product) {
+                return callback(null,product)
+            }
         })
     },
 
-    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, products:FinalRetailProduct[]|null) => void) => {
+    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, products:FinalRP[]|null) => void) => {
         const sql = `SELECT rp.*, pp.path AS photo_path
                      FROM retail_products rp
                      LEFT JOIN product_photos pp ON rp.id = pp.product_id
@@ -170,12 +161,17 @@ export const RetailProducts = {
                 return callback(err,null)
             }
 
-            const products = result.reduce<Record<number, FinalRetailProduct>>((acc,row) => {
+            const productWithType = result.map(product => ({
+                ...product,
+                type: 'retail' as ProductType
+            }))
+
+            const products = productWithType.reduce<Record<number, FinalRP>>((acc,row) => {
                 const {
                     id,name,description,cost,
                     quantity,category,sub_category,
                     kloset_id,product_condition,sold_out,
-                    photo_path
+                    photo_path,type
                 } = row
 
                 if (!id || !category) {
@@ -185,7 +181,7 @@ export const RetailProducts = {
                 if (!acc[id]) {
                     acc[id] = {id,name,description,cost,
                         quantity,category,sub_category,
-                        kloset_id,product_condition,sold_out,
+                        kloset_id,product_condition,sold_out,type,
                         photos: []}
                 }
 
@@ -200,7 +196,7 @@ export const RetailProducts = {
         })
     },
 
-    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalRetailProduct | null) => void) => {
+    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalRP | null) => void) => {
         const sql = `
             SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
             p.sold_out, p.quantity,p.category, p.sub_category,p.product_condition, 
@@ -219,7 +215,7 @@ export const RetailProducts = {
     
             const retailProduct = result[0]
 
-            const finalRP: FinalRetailProduct= {
+            const finalRP: FinalRP= {
                 id: retailProduct.id,
                 name: retailProduct.name,
                 description: retailProduct.description,
@@ -230,13 +226,14 @@ export const RetailProducts = {
                 quantity: retailProduct.quantity,
                 sub_category: retailProduct.sub_category,
                 category: retailProduct.category,
-                product_condition: retailProduct.product_condition
+                product_condition: retailProduct.product_condition,
+                type: 'retail' as ProductType
             }
             callback(null,finalRP)
         })
     } ,
 
-    getAllProducts: (callback:(err: MysqlError|null, product: ShopRP[]|null) => void)   => {
+    getAllProducts: (callback:(err: MysqlError|null, product: FinalRP[]|null) => void)   => {
 
         const sql = `
                     SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
@@ -255,9 +252,9 @@ export const RetailProducts = {
             }
 
             if (rawProducts) {
-               const finalProducts:ShopRP[] = rawProducts?.map(product => ({
+               const finalProducts:FinalRP[] = rawProducts?.map(product => ({
                     ...product,
-                    type: 'retail',
+                    type: 'retail' as ProductType,
                     photos: product.photos.split(',')
                 })) 
 
@@ -268,7 +265,7 @@ export const RetailProducts = {
 }
 
 export const CustomProducts = {
-    create: (productData: CustomProduct, callback:(err:MysqlError|null, product:FinalCustomProduct|null) => void) => {
+    create: (productData: CustomProduct, callback:(err:MysqlError|null, product:FinalCP|null) => void) => {
         const sql = `INSERT INTO custom_products (
             name,
             cost,
@@ -290,7 +287,7 @@ export const CustomProducts = {
         })
     },
 
-    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalCustomProduct[]|null) => void)=> {
+    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalCP[]|null) => void)=> {
         const sql = `SELECT cp.*, pp.path AS photo_path
                      FROM custom_products cp
                      LEFT JOIN product_photos pp ON cp.id = pp.product_id
@@ -302,12 +299,17 @@ export const CustomProducts = {
                 return callback(err,null)
             }
 
-            const products = result.reduce<Record<number, FinalCustomProduct>>((acc,row) => {
+            const productWithType = result.map (product => ({
+                ...product,
+                type: 'custom' as ProductType
+            }))
+
+            const products = productWithType.reduce<Record<number, FinalCP>>((acc,row) => {
                 const {
                     id,name,description,cost,
                     production_time,category,sub_category,
                     kloset_id,active,
-                    photo_path
+                    photo_path,type
                 } = row
 
                 if (!id) {
@@ -317,7 +319,7 @@ export const CustomProducts = {
                 if (!acc[id]) {
                     acc[id] = {id,name,description,cost,
                         production_time,category,sub_category,
-                        kloset_id,active,
+                        kloset_id,active,type,
                         photos: []}
                 }
 
@@ -332,7 +334,7 @@ export const CustomProducts = {
         })
     },
 
-    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalCustomProduct | null) => void) => {
+    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalCP | null) => void) => {
         const sql = `
             SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
             p.active, p.production_time,p.category, p.sub_category, 
@@ -351,7 +353,7 @@ export const CustomProducts = {
     
             const customProduct = result[0]
 
-            const finalCP: FinalCustomProduct= {
+            const finalCP: FinalCP= {
                 id: customProduct.id,
                 name: customProduct.name,
                 description: customProduct.description,
@@ -361,13 +363,14 @@ export const CustomProducts = {
                 photos: customProduct.photos ? customProduct.photos.split(',') : [], 
                 production_time: customProduct.production_time,
                 sub_category: customProduct.sub_category,
-                category: customProduct.category
+                category: customProduct.category,
+                type: 'custom' as ProductType
             }
             callback(null,finalCP)
         })
     } ,
     
-    getAllProducts: (callback:(err: MysqlError|null, product: ShopCP[]|null) => void)   => {
+    getAllProducts: (callback:(err: MysqlError|null, product: FinalCP[]|null) => void)   => {
 
         const sql = `
                     SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
@@ -386,7 +389,7 @@ export const CustomProducts = {
             }
 
             if (rawProducts) {
-                const finalProducts:ShopCP[] = rawProducts?.map(product => ({
+                const finalProducts:FinalCP[] = rawProducts?.map(product => ({
                      ...product,
                      type: 'custom',
                      photos: product.photos.split(',')
@@ -399,7 +402,7 @@ export const CustomProducts = {
 }
 
 export const DigitalProducts = {
-    create: (productData: DigitalProduct, callback:(err:MysqlError|null, product:FinalDigitalProduct|null) => void) => {
+    create: (productData: DigitalProduct, callback:(err:MysqlError|null, product:FinalDP|null) => void) => {
         const disableFK = 'SET FOREIGN_KEY_CHECKS=0'
         const enableFK = 'SET FOREIGN_KEY_CHECKS=1'
         const insertSql = `
@@ -432,7 +435,7 @@ export const DigitalProducts = {
         })
     },
 
-    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalDigitalProduct[]|null) => void) => {
+    getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalDP[]|null) => void) => {
         const sql = `SELECT dp.*, pp.path AS photo_path
                      FROM digital_products dp
                      LEFT JOIN product_photos pp ON dp.id = pp.product_id
@@ -444,11 +447,16 @@ export const DigitalProducts = {
                 return callback(err,null)
             }
 
-            const products = result.reduce<Record<number, FinalDigitalProduct>>((acc,row) => {
+            const productWithType = result.map(product => ({
+                ...product,
+                type: 'digital' as ProductType
+            }))
+
+            const products = productWithType.reduce<Record<number, FinalDP>>((acc,row) => {
                 const {
                     id,name,description,cost,
                     kloset_id,active,path,
-                    photo_path
+                    photo_path,type,
                 } = row
 
                 if (!id) {
@@ -458,7 +466,7 @@ export const DigitalProducts = {
                 if (!acc[id]) {
                     acc[id] = {
                         id,name,description,cost,
-                        kloset_id,path,active,
+                        kloset_id,path,active,type,
                         photos: []}
                 }
 
@@ -473,7 +481,7 @@ export const DigitalProducts = {
         })
     },
 
-    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalDigitalProduct | null) => void) => {
+    getSingleProduct: (product_id: number, callback: (err: MysqlError | null, product: FinalDP | null) => void) => {
         const sql = `
             SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
             p.active, p.path, 
@@ -492,7 +500,7 @@ export const DigitalProducts = {
     
             const digitalProduct = result[0]
 
-            const finalDP: FinalDigitalProduct= {
+            const finalDP: FinalDP= {
                 id: digitalProduct.id,
                 name: digitalProduct.name,
                 description: digitalProduct.description,
@@ -500,13 +508,14 @@ export const DigitalProducts = {
                 kloset_id: digitalProduct.kloset_id,
                 active: digitalProduct.active? true: false,
                 photos: digitalProduct.photos ? digitalProduct.photos.split(',') : [], 
-                path: digitalProduct.path 
+                path: digitalProduct.path,
+                type: 'digital'
             }
             callback(null,finalDP)
         })
     } ,
     
-    getAllProducts: (callback:(err: MysqlError|null, product: ShopDP[]|null) => void)   => {
+    getAllProducts: (callback:(err: MysqlError|null, product: FinalDP[]|null) => void)   => {
 
         const sql = `
                     SELECT p.id, p.name, p.description, p.cost, p.kloset_id, 
@@ -525,7 +534,7 @@ export const DigitalProducts = {
             }
 
             if (rawProducts) {
-                const finalProducts:ShopDP[] = rawProducts?.map(product => ({
+                const finalProducts:FinalDP[] = rawProducts?.map(product => ({
                      ...product,
                      type: 'digital',
                      photos: product.photos.split(',')
@@ -569,16 +578,21 @@ export const Books = {
                      WHERE b.kloset_id = ? AND pp.product_type = 'books'
                      `
         
-        db.query(sql,[kloset_id], (err,result:Book[]) => {
+        db.query(sql,[kloset_id], (err,result:RawBook[]) => {
             if (err) {
             return callback(err,null)
             }
+
+            const booksWithType = result.map(book => ({
+                ...book,
+                type: 'books' as ProductType
+            }))
             
-            const products = result.reduce<Record<number, FinalBook>>((acc,row) => {
+            const products = booksWithType.reduce<Record<number, FinalBook>>((acc,row) => {
                 const {
                     id,name,author, summary,cost,
                     kloset_id,sold_out,quantity,book_condition,
-                    photo_path,genre
+                    photos,genre,type
                 } = row
 
                 if (!id) {
@@ -588,12 +602,12 @@ export const Books = {
                 if (!acc[id]) {
                     acc[id] = {
                         id,name,author,summary,cost,
-                        kloset_id,quantity,sold_out,book_condition,
+                        kloset_id,quantity,sold_out,book_condition,type,
                         photos: [],genre: []}
                 }
-            
-                if (photo_path && genre) {
-                    acc[id].photos.push(photo_path)
+
+                if (photos && genre) {
+                    acc[id].photos.push(photos)
                     acc[id].genre.push(genre)
                 }
                 return acc
@@ -636,14 +650,15 @@ export const Books = {
                 sold_out: book.sold_out,
                 book_condition: book.book_condition,
                 photos: book.photos ? book.photos.split(',') : [],  
-                genre: book.genre ? book.genre.split(',') : []
+                genre: book.genre ? book.genre.split(',') : [],
+                type: 'books'
             }
             callback(null,finalBook)
             
         })
     },
     
-    getAllProducts: (callback:(err: MysqlError|null, product: ShopBook[]|null) => void)   => {
+    getAllProducts: (callback:(err: MysqlError|null, product: FinalBook[]|null) => void)   => {
 
         const sql = `
                     SELECT b.id, b.name, b.author, b.summary, b.cost, b.kloset_id, 
@@ -664,7 +679,7 @@ export const Books = {
             }
 
             if (rawProducts) {
-                const finalProducts:ShopBook[] = rawProducts?.map(product => ({
+                const finalProducts:FinalBook[] = rawProducts?.map(product => ({
                      ...product,
                      type: 'books',
                      genre: product.genre.split(','),
