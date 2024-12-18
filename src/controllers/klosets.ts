@@ -1,5 +1,6 @@
 import validator from "validator"
 import { Kloset } from "../models/Klosets"
+import { RetailProducts, DigitalProducts, CustomProducts, Books } from "../models/Products"
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { Response, Request } from "express"
@@ -92,19 +93,81 @@ export const fetchSingleKloset = async (req:Request, res:Response) => {
     const {id} = req.params
     
     try {
+
         Kloset.findKlosetById(parseInt(id), (err, kloset) => {
 
             if (err) {
-                res.status(500).json({error: 'database error fetching kloset'})
+                res.status(500).json({error: err.message})
             }
             if (!kloset && !err) {
                 res.status(404).json({error: 'kloset not found'})
             }
             if (kloset) {
-                res.status(200).json({kloset: kloset})
-            }
-            
+
+                try {
+
+                    if (kloset.type === 'retail') {
+
+                        RetailProducts.getProductsByKloset(kloset.id, (err,products) => {
+                
+                            if (err) {
+                                res.status(500).json({error: 'database error'})
+                            }
+
+                            if (products && !err) {
+                                res.status(200).json({kloset, products})
+                            }
+                        })
+                    }
+
+                    if (kloset.type === 'custom') {
+
+                        CustomProducts.getProductsByKloset(kloset.id, (err,products) => {
+                
+                            if (err) {
+                                res.status(500).json({error: 'database error'})
+                            }
+
+                            if (products && !err) {
+                                res.status(200).json({kloset, products})
+                            }
+                        })
+                    }
+
+                    if (kloset.type === 'digital') {
+
+                        DigitalProducts.getProductsByKloset(kloset.id, (err,products) => {
+                
+                            if (err) {
+                                res.status(500).json({error: 'database error'})
+                            }
+
+                            if (products) {
+                                res.status(200).json({kloset, products})
+                            }
+                        })
+                    }
+
+                    if (kloset.type === 'books') {
+
+                        Books.getBooksByKloset(kloset.id, (err,products) => {
+                
+                            if (err) {
+                                res.status(500).json({error: 'database error'})
+                            }
+
+                            if (products) {
+                                res.status(200).json({kloset, products})
+                            }
+                        })
+                    }
+                    
+                } catch (error) {
+                    res.status(500).json({error: 'unexpected error fetching products'})
+                }
+            } 
         })
+
     } catch (error) {
         res.status(500).json({error: `unknown error occured fetching kloset`})
     }

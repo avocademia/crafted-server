@@ -39,14 +39,27 @@ export const Kloset = {
     },
 
     findKlosetById: (id:number, callback:(err:MysqlError|null, kloset:KlosetData|null) => void) => {
-        const sql = `SELECT * FROM kloset WHERE id=?`
+        const sql = `
+                        SELECT k.*, 
+                        GROUP_CONCAT(DISTINCT kf.user_id) AS followers
+                        FROM kloset k 
+                        LEFT JOIN kloset_followers kf ON k.id = kf.kloset_id
+                        WHERE k.id = ?
+                        GROUP BY k.id
+                    `
 
         db.query(sql, [id], (err,kloset) => {
             if (err) {
                 return callback(err,null)
             }
+
+            
             if (kloset && !err) {
-                return callback(null,kloset[0])
+                const finalKloset:KlosetData[] = kloset.map((kloset:any)=> ({
+                    ...kloset,
+                    followers: typeof kloset.followers ==='string'? kloset.followers.split(','):null
+                }))
+                callback(null,finalKloset[0])
             }
         })
     },
@@ -54,14 +67,12 @@ export const Kloset = {
     findKlosetsByUserId: (userId:number, callback:(err:MysqlError|null, kloset:KlosetData[]|null) => void) => {
         const sql = `
                         SELECT k.*, 
-                        (
-                            SELECT GROUP_CONCAT(CONCAT_WS(':', kf.user_id, u.username) SEPARATOR ', ')
-                            FROM kloset_followers kf
-                            JOIN users u ON kf.user_id = u.id
-                            WHERE kf.kloset_id = k.id
-                        ) AS followers
+                        GROUP_CONCAT(DISTINCT kf.user_id) AS followers
                         FROM kloset k 
+                        LEFT JOIN kloset_followers kf ON k.id = kf.kloset_id
                         WHERE k.user_id = ?
+                        GROUP BY k.id
+
                     `
     
         db.query(sql, [userId], (err,klosets:RawKlosetData[]|null) => {

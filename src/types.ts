@@ -35,7 +35,7 @@ export type UserSignUpData = {
 
 export type Category = 'apparel'|'shoes'|'decor'|'jewellery'|'digital'|'books'|undefined
 export type KlosetStatus = 'pending'|'approved'
-export type ProductType = 'books'|'digital'|'digital'|'custom'
+export type ProductType = 'books'|'retail'|'digital'|'custom'
 export type ProductCondition = 'brand_new'|'used'|'thrifted'
 
 export interface UploadedFile {

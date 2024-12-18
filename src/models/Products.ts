@@ -150,13 +150,13 @@ export const RetailProducts = {
     },
 
     getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, products:FinalRP[]|null) => void) => {
-        const sql = `SELECT rp.*, pp.path AS photo_path
+        const sql = `SELECT rp.*, pp.path AS photos
                      FROM retail_products rp
                      LEFT JOIN product_photos pp ON rp.id = pp.product_id
                      WHERE rp.kloset_id =? AND pp.product_type = 'retail'
                     `
         
-        db.query(sql,[kloset_id], (err,result:RetailProduct[]) => {
+        db.query(sql,[kloset_id], (err,result:RawRP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -171,7 +171,7 @@ export const RetailProducts = {
                     id,name,description,cost,
                     quantity,category,sub_category,
                     kloset_id,product_condition,sold_out,
-                    photo_path,type
+                    photos,type
                 } = row
 
                 if (!id || !category) {
@@ -185,8 +185,8 @@ export const RetailProducts = {
                         photos: []}
                 }
 
-                if (photo_path) {
-                    acc[id].photos.push(photo_path)
+                if (photos) {
+                    acc[id].photos.push(photos)
                 }
                 return acc
             }, {})
@@ -288,13 +288,13 @@ export const CustomProducts = {
     },
 
     getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalCP[]|null) => void)=> {
-        const sql = `SELECT cp.*, pp.path AS photo_path
+        const sql = `SELECT cp.*, pp.path AS photos
                      FROM custom_products cp
                      LEFT JOIN product_photos pp ON cp.id = pp.product_id
                      WHERE cp.kloset_id =? AND pp.product_type = 'custom'
                     `
         
-        db.query(sql,[kloset_id], (err,result:CustomProduct[]) => {
+        db.query(sql,[kloset_id], (err,result:RawCP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -309,7 +309,7 @@ export const CustomProducts = {
                     id,name,description,cost,
                     production_time,category,sub_category,
                     kloset_id,active,
-                    photo_path,type
+                    photos,type
                 } = row
 
                 if (!id) {
@@ -323,8 +323,8 @@ export const CustomProducts = {
                         photos: []}
                 }
 
-                if (photo_path) {
-                    acc[id].photos.push(photo_path)
+                if (photos) {
+                    acc[id].photos.push(photos)
                 }
                 return acc
             }, {})
@@ -436,13 +436,13 @@ export const DigitalProducts = {
     },
 
     getProductsByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalDP[]|null) => void) => {
-        const sql = `SELECT dp.*, pp.path AS photo_path
+        const sql = `SELECT dp.*, pp.path AS photos
                      FROM digital_products dp
                      LEFT JOIN product_photos pp ON dp.id = pp.product_id
                      WHERE dp.kloset_id =? AND pp.product_type = 'digital'
                     `
         
-        db.query(sql,[kloset_id], (err,result: DigitalProduct[]) => {
+        db.query(sql,[kloset_id], (err,result: RawDP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -456,7 +456,7 @@ export const DigitalProducts = {
                 const {
                     id,name,description,cost,
                     kloset_id,active,path,
-                    photo_path,type,
+                    photos,type,
                 } = row
 
                 if (!id) {
@@ -470,8 +470,8 @@ export const DigitalProducts = {
                         photos: []}
                 }
 
-                if (photo_path) {
-                    acc[id].photos.push(photo_path)
+                if (photos) {
+                    acc[id].photos.push(photos)
                 }
                 return acc
             }, {})
@@ -571,7 +571,7 @@ export const Books = {
 
     getBooksByKloset: (kloset_id:number, callback:(err:MysqlError|null, product:FinalBook[]|null) => void) => {
 
-        const sql = `SELECT b.*, pp.path AS photo_path, bg.genre AS genre
+        const sql = `SELECT b.*, pp.path AS photos, bg.genre AS genre
                      FROM books b
                      LEFT JOIN book_genres bg on b.id = bg.book
                      LEFT JOIN product_photos pp ON b.id = pp.product_id
