@@ -176,7 +176,7 @@ export interface MulterRequest extends Request {
 export interface RequestWithParams extends Request {
     params: {
         kloset_id?: string,
-        type?: string,
+        type?: ProductType,
         product_id?: string,
         cart_item_id?: string,
         new_cost?: string,

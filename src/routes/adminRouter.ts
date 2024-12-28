@@ -17,7 +17,8 @@ import {
          sendProductPath,
          deleteDigitalProduct, 
          getProductsByKloset,
-         getSingleProduct
+         getSingleProduct,
+         updateProduct
        } from "../controllers/products"
 import { uploadDigitalFile } from "../services/uploadDigitalFile"
 import { uploadProductPhotos } from "../services/uploadProductPhotos"
@@ -49,6 +50,7 @@ adminRouter.post('/kloset/:id/add-product',verifyTokens, (req:Request,res:Respon
 }, addProduct)
 adminRouter.get('/kloset/:kloset_id&:type/products', verifyTokens, getProductsByKloset)
 adminRouter.get('/:product_id&:type', verifyTokens, getSingleProduct)
+adminRouter.patch('/:product_id&:type', verifyTokens, updateProduct)
 adminRouter.post('/save-digital-product',verifyTokens, (req:Request,res:Response,next:NextFunction) => {
     
         uploadDigitalFile(req, res, (err) => {

@@ -12,6 +12,7 @@ import fs from 'fs'
 import { MulterRequest, RequestWithParams, Category, ProductCondition } from "../types"
 import { Request, Response } from "express"
 import { promisify } from "util"
+import { error } from "console"
 const asyncUnlink = promisify(fs.unlink)
 
 interface DeleteRequestBody {
@@ -532,5 +533,210 @@ export const getAllProducts = async (req:Request, res:Response) => {
         
     } catch (error) {
         res.status(500).json({error: 'unexpected error fetching products'})
+    }
+}
+
+export const updateProduct = async (req:RequestWithParams, res:Response) => {
+
+    const {field, value} = req.body
+    const {product_id, type} = req.params
+
+    if (!field||!value||!product_id||!type) {
+        res.status(400).json({error: 'Bad Request'})
+    }
+
+    try {
+        
+        if (field === 'name' && product_id) {
+
+            if (type === 'retail') {
+                RetailProducts.updateName(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: err.message})
+                    } else {
+                        res.status(200).json({message: 'success!'})
+                    }
+                })
+            }
+    
+            if (type === 'custom') {
+                CustomProducts.updateName(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    } else {
+                        res.status(200).json({message: 'success!'})
+                    }
+                })
+            }
+    
+            if (type === 'digital') {
+                DigitalProducts.updateName(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    } else {
+                        res.status(200).json({message: 'success!'})
+                    }
+                })
+            }
+    
+            if (type === 'books') {
+                Books.updateName(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    } else {
+                        res.status(200).json({message: 'success!'})
+                    }
+                })
+            }
+        }
+
+        if (field=== 'cost' && product_id) {
+            if (type === 'retail') {
+                RetailProducts.updateCost(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'custom') {
+                CustomProducts.updateCost(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'digital') {
+                DigitalProducts.updateCost(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'books') {
+                Books.updateCost(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+        }
+
+        if(field === 'sub_category' && product_id) {
+            if (type === 'custom') {
+                CustomProducts.updateSubCategory(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'retail') {
+                RetailProducts.updateSubCategory(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+        }
+
+        if(field === 'category' && product_id) {
+            if (type === 'custom') {
+                CustomProducts.updateCategory(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'retail') {
+                RetailProducts.updateCategory(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+        }
+
+        if (field === 'description' && product_id) {
+            if (type === 'retail') {
+                RetailProducts.updateDescription(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'custom') {
+                CustomProducts.updateDescription(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'digital') {
+                DigitalProducts.updateDescription(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+        }
+
+        if (field === 'summary' && product_id) {
+            Books.updateSummary(value, parseInt(product_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+            })
+        } 
+
+        if (field === 'author' && product_id) {
+            Books.updateAuthor(value, parseInt(product_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+            })
+        }
+
+        if (field === 'quantity' && product_id) {
+            if (type === 'retail') {
+                RetailProducts.updateQuantity(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (type === 'books') {
+                Books.updateQuantity(value, parseInt(product_id), (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+        }
+
+        if (field === 'production_time' && product_id) {
+            CustomProducts.updateProductionTime(value, parseInt(product_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+            })
+        }
+
+        if (field === 'path' && product_id) {
+            DigitalProducts.updatePath(value, parseInt(product_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+            })
+        } 
+
+    } catch (error) {
+       res.status(500).json({error: 'unexpected server error'}) 
     }
 }

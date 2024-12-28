@@ -1,8 +1,27 @@
-import { MysqlError, Types } from 'mysql'
+import { MysqlError } from 'mysql'
 import db from '../config/db'
-import { Book, Category, CustomProduct, DigitalProduct, ProductCondition, ProductPathData, ProductType, RetailProduct } from '../types'
+import { Category, ProductCondition, ProductPathData, ProductType } from '../types'
 
-interface RawRP {
+export interface CreateProductData {
+    kloset_id?: number,
+    name?: string,
+    description?: string,
+    cost?: number,
+    active?: boolean,
+    path?: string,
+    production_time?: number,
+    category?: Category,
+    sub_category?: string,
+    genre?: string,
+    author?: string,
+    summary?: string,
+    quantity?: number,
+    sold_out?: boolean,
+    book_condition?: ProductCondition,
+    product_condition?: ProductCondition,
+}
+
+export interface RawRP {
     id: number;
     kloset_id: number,
     name: string,
@@ -16,7 +35,7 @@ interface RawRP {
     product_condition: ProductCondition
 }
 
-interface FinalRP {
+export interface FinalRP {
     insertId?: number,
     id: number,
     name: string,
@@ -32,7 +51,7 @@ interface FinalRP {
     type: ProductType
 }
 
-interface RawCP {
+export interface RawCP {
     id: number;
     kloset_id: number,
     name: string,
@@ -45,7 +64,7 @@ interface RawCP {
     sub_category: string
 }
 
-interface FinalCP {
+export interface FinalCP {
     insertId?: number,
     id: number,
     kloset_id: number,
@@ -60,7 +79,7 @@ interface FinalCP {
     type: ProductType
 }
 
-interface RawDP {
+export interface RawDP {
     id: number;
     kloset_id: number,
     name: string,
@@ -71,7 +90,7 @@ interface RawDP {
     photos: string
 }
 
-interface FinalDP {
+export interface FinalDP {
     insertId?: number,
     id: number,
     kloset_id: number,
@@ -84,7 +103,7 @@ interface FinalDP {
     type: ProductType
 }
 
-interface RawBook  {
+export interface RawBook  {
     id: number;
     kloset_id: number;
     name: string;
@@ -98,7 +117,7 @@ interface RawBook  {
     genre: string;
 }
 
-interface FinalBook {
+export interface FinalBook {
     insertId?: number,
     id: number,
     kloset_id: number,
@@ -114,14 +133,14 @@ interface FinalBook {
     type: ProductType
 }
 
-interface ProductPhotos {
+export interface ProductPhotos {
     id?: number,
     product_id?: number,
     product_type: ProductType,
     path: string
 }
 
-interface GenreTable {
+export interface GenreTable {
     value: string,
     book?: number
 }
@@ -129,7 +148,7 @@ interface GenreTable {
 
 export const RetailProducts = {
     
-    create: (productData: RetailProduct, callback:(err:MysqlError|null, product: FinalRP|null) => void) => {
+    create: (productData: CreateProductData, callback:(err:MysqlError|null, product: FinalRP|null) => void) => {
         const sql = `INSERT INTO retail_products 
         (name,description,cost,quantity,category,
         sub_category,product_condition,kloset_id)
@@ -231,7 +250,7 @@ export const RetailProducts = {
             }
             callback(null,finalRP)
         })
-    } ,
+    },
 
     getAllProducts: (callback:(err: MysqlError|null, product: FinalRP[]|null) => void)   => {
 
@@ -261,11 +280,71 @@ export const RetailProducts = {
                 return callback(null, finalProducts)
             }
         })
-    }
+    },
+
+    updateName : (name:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET name = ? WHERE id = ?`
+
+        db.query(sql, [name,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateDescription : (description:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET description = ? WHERE id = ?`
+
+        db.query(sql, [description,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCost : (cost:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET cost = ? WHERE id = ?`
+
+        db.query(sql, [cost,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCategory : (category:Category, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET category = ? WHERE id = ?`
+
+        db.query(sql, [category,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateSubCategory : (sub_category:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET sub_category = ? WHERE id = ?`
+
+        db.query(sql, [sub_category,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateQuantity : (quantity:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET quantity = ? WHERE id = ?`
+
+        db.query(sql, [quantity,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
 }
 
 export const CustomProducts = {
-    create: (productData: CustomProduct, callback:(err:MysqlError|null, product:FinalCP|null) => void) => {
+    create: (productData: CreateProductData, callback:(err:MysqlError|null, product:FinalCP|null) => void) => {
         const sql = `INSERT INTO custom_products (
             name,
             cost,
@@ -398,11 +477,61 @@ export const CustomProducts = {
                  return callback(null, finalProducts)
              }
         })
-    }
+    },
+
+    updateName : (name:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET name = ? WHERE id = ?`
+
+        db.query(sql, [name,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateDescription : (description:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET description = ? WHERE id = ?`
+
+        db.query(sql, [description,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCost : (cost:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET cost = ? WHERE id = ?`
+
+        db.query(sql, [cost,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCategory : (category:Category, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET category = ? WHERE id = ?`
+
+        db.query(sql, [category,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateSubCategory : (sub_category:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET sub_category = ? WHERE id = ?`
+
+        db.query(sql, [sub_category,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
 }
 
 export const DigitalProducts = {
-    create: (productData: DigitalProduct, callback:(err:MysqlError|null, product:FinalDP|null) => void) => {
+    create: (productData: CreateProductData, callback:(err:MysqlError|null, product:FinalDP|null) => void) => {
         const disableFK = 'SET FOREIGN_KEY_CHECKS=0'
         const enableFK = 'SET FOREIGN_KEY_CHECKS=1'
         const insertSql = `
@@ -513,7 +642,7 @@ export const DigitalProducts = {
             }
             callback(null,finalDP)
         })
-    } ,
+    },
     
     getAllProducts: (callback:(err: MysqlError|null, product: FinalDP[]|null) => void)   => {
 
@@ -543,11 +672,51 @@ export const DigitalProducts = {
                  return callback(null, finalProducts)
              }
         })
-    }
+    },
+
+    updateName : (name:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE digital_products SET name = ? WHERE id = ?`
+
+        db.query(sql, [name,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateDescription : (description:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE digital_products SET description = ? WHERE id = ?`
+
+        db.query(sql, [description,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCost : (cost:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE digital_products SET cost = ? WHERE id = ?`
+
+        db.query(sql, [cost,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updatePath : (path:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE digital_products SET path = ? WHERE id = ?`
+
+        db.query(sql, [path,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
 }
 
 export const Books = {
-    create: (productData:Book, callback:(err:MysqlError|null, product:FinalBook|null) => void) => {
+    create: (productData: CreateProductData, callback:(err:MysqlError|null, product:FinalBook|null) => void) => {
         const sql = `INSERT INTO books (
                         name,
                         author,
@@ -688,7 +857,57 @@ export const Books = {
                  return callback(null, finalProducts)
              }
         })
-    }
+    },
+
+    updateName : (name:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE books SET name = ? WHERE id = ?`
+
+        db.query(sql, [name,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateAuthor : (author:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE books SET author = ? WHERE id = ?`
+
+        db.query(sql, [author,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateQuantity : (quantity:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE retail_products SET quantity = ? WHERE id = ?`
+
+        db.query(sql, [quantity,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateSummary : (summary:string, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE books SET summary = ? WHERE id = ?`
+
+        db.query(sql, [summary,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateCost : (cost:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE books SET cost = ? WHERE id = ?`
+
+        db.query(sql, [cost,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
 }
 
 export const ProductPath = {
