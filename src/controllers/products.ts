@@ -12,7 +12,6 @@ import fs from 'fs'
 import { MulterRequest, RequestWithParams, Category, ProductCondition } from "../types"
 import { Request, Response } from "express"
 import { promisify } from "util"
-import { error } from "console"
 const asyncUnlink = promisify(fs.unlink)
 
 interface DeleteRequestBody {
@@ -25,258 +24,264 @@ export const addProduct = async (req:MulterRequest,res:Response) => {
     if (req.body.type === 'retail') {
 
         const {name,cost,category,sub_category,quantity,description,condition,type} = req.body
-        if (!name||!cost||!category||!sub_category||!quantity||!description||!condition) {
+
+        const goodRequest = name&&cost&&description&&
+                            condition&&quantity&&
+                            category&&sub_category&&
+                            validator.isNumeric(cost) &&
+                            validator.isNumeric(quantity)
+        if (!goodRequest) {
             res.status(400).json({error: 'Some required fields are missing'})
-        }
-        try {
+        } else {
+            try {
 
-            const sanitizedName = validator.escape(name)
-            const sanitizedCost = validator.escape(cost)
-            const sanitizedCategory = category as Category
-            const sanitizedSubCategory = validator.escape(sub_category)
-            const sanitizedQuantity = validator.escape(quantity)
-            const sanitizedDescription = validator.escape(description)
-            const sanitizedCondition = condition as ProductCondition
-
-            const productData = {
-                name: sanitizedName,
-                cost: parseFloat(sanitizedCost),
-                category: sanitizedCategory,
-                sub_category: sanitizedSubCategory,
-                quantity: parseInt(sanitizedQuantity),
-                description: sanitizedDescription,
-                product_condition: sanitizedCondition,
-                kloset_id: parseInt(id),
-                sold_out: false
-            }
-
-            RetailProducts.create(productData, (err, product) => {
-                if (err) {
-                    res.status(500).json({error: `database error creating product`})
+                const productData = {
+                    name: validator.escape(name),
+                    cost: parseFloat(cost),
+                    category: category as Category,
+                    sub_category: validator.escape(sub_category),
+                    quantity: quantity,
+                    description: validator.escape(description),
+                    product_condition: condition as ProductCondition,
+                    kloset_id: parseInt(id),
+                    sold_out: false
                 }
-
-                if (product && req.files) {
-
-                    try {
-
-                        const allFiles = Object.values(req.files).flat()
-                        const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
-                        const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
     
-                        ProductPhotos.addMultiple(photoData, (err) => {
-                            if (err) {
-                                res.status(500).json({error: 'Database Error saving photos'})
-                            }
-                            res.status(201).json({message: 'product successfully created'})
-                        })
-                    } catch (error) {
-                        res.status(500).json({error: `unknown error occured adding retail product photos`})
+                RetailProducts.create(productData, (err, product) => {
+                    if (err) {
+                        res.status(500).json({error: `database error creating product`})
                     }
-                } 
-                if (!product && !err) {
-                    res.status(404).json({error: 'error fetching product after creation'})
-                }
-            })      
-        } catch (error) {
-            res.status(500).json({error: `unknown error occured creating retail product`})
+    
+                    if (product && req.files) {
+    
+                        try {
+    
+                            const allFiles = Object.values(req.files).flat()
+                            const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
+                            const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
+        
+                            ProductPhotos.addMultiple(photoData, (err) => {
+                                if (err) {
+                                    res.status(500).json({error: 'Database Error saving photos'})
+                                }
+                                res.status(201).json({message: 'product successfully created'})
+                            })
+                        } catch (error) {
+                            res.status(500).json({error: `unknown error occured adding retail product photos`})
+                        }
+                    } 
+                    if (!product && !err) {
+                        res.status(404).json({error: 'error fetching product after creation'})
+                    }
+                })      
+            } catch (error) {
+                res.status(500).json({error: `unknown error occured creating retail product`})
+            }
         }
     }
 
     if (req.body.type === 'custom') {
 
         const {name,cost,category,sub_category,production_time,description,type} = req.body
-        if (!name||!cost||!category||!sub_category||!production_time||!description||!type) {
+        const goodRequest = name&&cost&&description&&
+                            production_time&&category&&
+                            sub_category&&type&&
+                            validator.isNumeric(cost) &&
+                            validator.isNumeric(production_time)
+        if (!goodRequest) {
             res.status(400).json({error: 'Some required fields are missing'})
-        }
-        try {
+        } else {
+            try {
 
 
-            const sanitizedName = validator.escape(name)
-            const sanitizedCost = validator.escape(cost)
-            const sanitizedCategory = category as Category
-            const sanitizedSubCategory = validator.escape(sub_category)
-            const sanitizedProductionTime = validator.escape(production_time)
-            const sanitizedDescription = validator.escape(description)
-
-            const productData = {
-                name: sanitizedName,
-                cost: parseFloat(sanitizedCost),
-                category: sanitizedCategory,
-                sub_category: sanitizedSubCategory,
-                production_time: parseInt(sanitizedProductionTime),
-                description: sanitizedDescription,
-                kloset_id: parseInt(id),
-                active: true
-            }
-
-            CustomProducts.create(productData, (err, product) => {
-                if (err) {
-                    res.status(500).json({error: 'Database error creating product'})
-                }
-
-                if (product && req.files) {
-
-                    try {
-
-                        const allFiles = Object.values(req.files).flat()
-                        const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
-                        const photoData = photoPaths.map(path => ({product_id: product.id, product_type: type, path: path}))
+                const sanitizedName = validator.escape(name)
+                const sanitizedCost = validator.escape(cost)
+                const sanitizedCategory = category as Category
+                const sanitizedSubCategory = validator.escape(sub_category)
+                const sanitizedProductionTime = validator.escape(production_time)
+                const sanitizedDescription = validator.escape(description)
     
-                        ProductPhotos.addMultiple(photoData, (err) => {
-                            if (err) {
-                                res.status(500).json({error: `database error saving photos`})
-                            }
-                            res.status(201).json({message: 'product successfully created'})
-                        })
-                    } catch (error) {
-                        res.status(500).json({error: `unknown error occured adding custom product photos`})
-                    }
-                } 
-
-                if (!err && !product) {
-                    res.status(404).json({error: 'error fetching product after creation'})
+                const productData = {
+                    name: sanitizedName,
+                    cost: parseFloat(sanitizedCost),
+                    category: sanitizedCategory,
+                    sub_category: sanitizedSubCategory,
+                    production_time: parseInt(sanitizedProductionTime),
+                    description: sanitizedDescription,
+                    kloset_id: parseInt(id),
+                    active: true
                 }
-            })
-        } catch (error) {
-            res.status(500).json({error: `unknown error occured`})
+    
+                CustomProducts.create(productData, (err, product) => {
+                    if (err) {
+                        res.status(500).json({error: 'Database error creating product'})
+                    }
+    
+                    if (product && req.files) {
+    
+                        try {
+    
+                            const allFiles = Object.values(req.files).flat()
+                            const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
+                            const photoData = photoPaths.map(path => ({product_id: product.id, product_type: type, path: path}))
+        
+                            ProductPhotos.addMultiple(photoData, (err) => {
+                                if (err) {
+                                    res.status(500).json({error: `database error saving photos`})
+                                }
+                                res.status(201).json({message: 'product successfully created'})
+                            })
+                        } catch (error) {
+                            res.status(500).json({error: `unknown error occured adding custom product photos`})
+                        }
+                    } 
+    
+                    if (!err && !product) {
+                        res.status(404).json({error: 'error fetching product after creation'})
+                    }
+                })
+            } catch (error) {
+                res.status(500).json({error: `unknown error occured`})
+            }
         }
+   
     }
 
     if (req.body.type === 'digital') {
 
         const {name,cost,description,type, path} = req.body
-        if (!name||!cost||!description||!path) {
+        const goodRequest = name&&cost&&description&&
+                            path&&validator.isNumeric(cost)
+        if (!goodRequest) {
             res.status(400).json({error: 'Some required fields are missing'})
-        }
-        try {
+        } else {
+            try {
 
-            const sanitizedName = validator.escape(name)
-            const sanitizedCost = validator.escape(cost)
-            const sanitizedDescription = validator.escape(description)
-
-            const productData = {
-                name: sanitizedName,
-                cost: parseFloat(sanitizedCost),
-                path: path,
-                description: sanitizedDescription,
-                kloset_id: parseInt(id),
-                active: true
-            }
-
-            DigitalProducts.create(productData, (err, product) => {
-                if (err) {
-                    res.status(500).json({error: `${err.message}`})
+                const productData = {
+                    name: validator.escape(name),
+                    cost: parseFloat(cost),
+                    path: validator.escape(path),
+                    description: validator.escape(description),
+                    kloset_id: parseInt(id),
+                    active: true
                 }
-
-                if (product && req.files) {
-
-                    try {
-                    
-                        const allFiles = Object.values(req.files).flat()
-                        const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
-                        const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
     
-                        ProductPhotos.addMultiple(photoData, (err) => {
-                            if (err) {
-                                res.status(500).json({error: 'Database Error saving photos'})
-                            }
-                            ProductPath.updateLinkStatus(path, (err) => {
-                                if (err) {
-                                    res.status(500).json({error: `${err.message}`})
-                                }
-                                res.status(201).json({message: 'product successfully created'})
-                            }) 
-                        })
-                        
-                    } catch (error) {
-                        res.status(500).json({error: `unknown error occured adding digital product photos`})
+                DigitalProducts.create(productData, (err, product) => {
+                    if (err) {
+                        res.status(500).json({error: `${err.message}`})
                     }
-
-                } else {
-                    res.status(404).json({error: 'error fetching product after creation'})
-                }
-
-            })
-
-        } catch (error) {
-            res.status(500).json({error: `unknown error occured creating digital product`})
+    
+                    if (product && req.files) {
+    
+                        try {
+                        
+                            const allFiles = Object.values(req.files).flat()
+                            const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
+                            const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
+        
+                            ProductPhotos.addMultiple(photoData, (err) => {
+                                if (err) {
+                                    res.status(500).json({error: 'Database Error saving photos'})
+                                }
+                                ProductPath.updateLinkStatus(path, (err) => {
+                                    if (err) {
+                                        res.status(500).json({error: `${err.message}`})
+                                    }
+                                    res.status(201).json({message: 'product successfully created'})
+                                }) 
+                            })
+                            
+                        } catch (error) {
+                            res.status(500).json({error: `unknown error occured adding digital product photos`})
+                        }
+    
+                    } else {
+                        res.status(404).json({error: 'error fetching product after creation'})
+                    }
+    
+                })
+    
+            } catch (error) {
+                res.status(500).json({error: `unknown error occured creating digital product`})
+            }
         }
+
     }
 
     if (req.body.type === 'books') {
 
         const {name,cost,summary,condition,type,quantity,author} = req.body
         const genres: string[] = req.body.genres
-        if (!name||!cost||!summary||!condition||!quantity||!genres||!author) {
-            res.status(400).json({error: 'Some required fields are missing'})
-        }
-        try {
+        const goodRequest = name&&cost&&summary&&
+                            condition&&quantity&&
+                            genres&&author&&
+                            validator.isNumeric(cost) &&
+                            validator.isNumeric(quantity)
+        if (!goodRequest) {
+            res.status(400).json({error: 'some required fields are missing or inadequate'})
+        } else {
+            try {
 
-            const sanitizedName = validator.escape(name)
-            const sanitizedSummary = validator.escape(summary)
-            const sanitizedCost = validator.escape(cost)
-            const sanitizedQuantity = validator.escape(quantity)
-            const sanitizedCondition = condition as ProductCondition
-            const sanitizedAuthor = validator.escape(author)
-
-            const productData = {
-                name: sanitizedName,
-                cost: parseFloat(sanitizedCost),
-                summary: sanitizedSummary,
-                book_condition: sanitizedCondition,
-                quantity: parseInt(sanitizedQuantity),
-                kloset_id: parseInt(id),
-                author: sanitizedAuthor,
-                sold_out: false,
-            }
-
-            Books.create(productData, (err, product) => {
-                if (err) {
-                    res.status(500).json({error: `database error creating book`})
+                const productData = {
+                    name: validator.escape(name),
+                    cost: parseFloat(cost),
+                    summary: validator.escape(summary),
+                    book_condition: condition as ProductCondition,
+                    quantity: quantity,
+                    kloset_id: parseInt(id),
+                    author: validator.escape(author),
+                    sold_out: false,
                 }
-
-                if (product && req.files) {
-
-                    try {
-                    
-                        const allFiles = Object.values(req.files).flat()
-                        const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
-                        const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
-                        const mappedGenres = genres.map(genre => ({value: genre, book: product.insertId}))
     
-                        ProductPhotos.addMultiple(photoData, (err) => {
-                            if (err) {
-                                res.status(500).json({error: 'Database Error saving photos'})
-                            }
-    
-                            try {
-    
-                                if (mappedGenres[0].book === undefined) {
-                                    res.status(500).json({error: 'error saving product photos'})
-                                }
-                                BookGenres.addMultiple(mappedGenres, (err) => {
-                                    if (err) {
-                                        res.status(500).json({error: 'genre database error'})
-                                    }
-                                    res.status(201).json({message: 'product successfully created'})
-                                })
-                            } catch (error) {
-                                res.status(500).json({error: 'error saving genres'})
-                            }
-                        })
-    
-                    } catch (error) {
-                        res.status(500).json({error: `unknown error adding book photos`})
+                Books.create(productData, (err, product) => {
+                    if (err) {
+                        res.status(500).json({error: `database error creating book`})
                     }
-
-                } else {
-                    res.status(404).json({error: 'error fetching product after creation'})
-                }
-            })
-            
-        } catch (error) {
-            res.status(500).json({error: `unknown error occured creating book listing`})
+    
+                    if (product && req.files) {
+    
+                        try {
+                        
+                            const allFiles = Object.values(req.files).flat()
+                            const photoPaths = allFiles.map(file => `uploads/product-photos/${file.filename}`)
+                            const photoData = photoPaths.map(path => ({product_id: product.insertId, product_type: type, path: path}))
+                            const mappedGenres = genres.map(genre => ({value: genre, book: product.insertId}))
+        
+                            ProductPhotos.addMultiple(photoData, (err) => {
+                                if (err) {
+                                    res.status(500).json({error: 'Database Error saving photos'})
+                                }
+        
+                                try {
+        
+                                    if (mappedGenres[0].book === undefined) {
+                                        res.status(500).json({error: 'error saving product photos'})
+                                    }
+                                    BookGenres.addMultiple(mappedGenres, (err) => {
+                                        if (err) {
+                                            res.status(500).json({error: 'genre database error'})
+                                        }
+                                        res.status(201).json({message: 'product successfully created'})
+                                    })
+                                } catch (error) {
+                                    res.status(500).json({error: 'error saving genres'})
+                                }
+                            })
+        
+                        } catch (error) {
+                            res.status(500).json({error: `unknown error adding book photos`})
+                        }
+    
+                    } else {
+                        res.status(404).json({error: 'error fetching product after creation'})
+                    }
+                })
+                
+            } catch (error) {
+                res.status(500).json({error: `unknown error occured creating book listing`})
+            }
         }
+
     }
 }
 
@@ -307,7 +312,7 @@ export const deleteDigitalProduct = async (req:Request, res:Response) => {
     const __dirname = path.dirname(__filename) 
     const body = req.body as DeleteRequestBody;
     if (!body || !body.path) {
-        res.status(400).json({ error: 'Empty body or path missing' });
+        res.status(400).json({ error: 'empty body or path missing' });
     }
     const filePath = body.path
 
@@ -548,9 +553,10 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
     try {
         
         if (field === 'name' && product_id) {
-
+            const newName = validator.escape(value)
             if (type === 'retail') {
-                RetailProducts.updateName(value, parseInt(product_id), (err) => {
+                
+                RetailProducts.updateName(newName, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: err.message})
                     } else {
@@ -560,7 +566,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
     
             if (type === 'custom') {
-                CustomProducts.updateName(value, parseInt(product_id), (err) => {
+                CustomProducts.updateName(newName, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     } else {
@@ -570,7 +576,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
     
             if (type === 'digital') {
-                DigitalProducts.updateName(value, parseInt(product_id), (err) => {
+                DigitalProducts.updateName(newName, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     } else {
@@ -580,7 +586,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
     
             if (type === 'books') {
-                Books.updateName(value, parseInt(product_id), (err) => {
+                Books.updateName(newName, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     } else {
@@ -590,7 +596,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
         }
 
-        if (field=== 'cost' && product_id) {
+        if (field=== 'cost' && product_id && validator.isNumeric(value)) {
             if (type === 'retail') {
                 RetailProducts.updateCost(value, parseInt(product_id), (err) => {
                     if (err) {
@@ -625,8 +631,9 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         }
 
         if(field === 'sub_category' && product_id) {
+            const newSubCategory = validator.escape(value)
             if (type === 'custom') {
-                CustomProducts.updateSubCategory(value, parseInt(product_id), (err) => {
+                CustomProducts.updateSubCategory(newSubCategory, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -634,7 +641,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
 
             if (type === 'retail') {
-                RetailProducts.updateSubCategory(value, parseInt(product_id), (err) => {
+                RetailProducts.updateSubCategory(newSubCategory, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -643,8 +650,9 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         }
 
         if(field === 'category' && product_id) {
+            const newCategory = validator.escape(value) as Category
             if (type === 'custom') {
-                CustomProducts.updateCategory(value, parseInt(product_id), (err) => {
+                CustomProducts.updateCategory(newCategory, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -652,7 +660,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
 
             if (type === 'retail') {
-                RetailProducts.updateCategory(value, parseInt(product_id), (err) => {
+                RetailProducts.updateCategory(newCategory, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -661,8 +669,9 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         }
 
         if (field === 'description' && product_id) {
+            const newDescription = validator.escape(value)
             if (type === 'retail') {
-                RetailProducts.updateDescription(value, parseInt(product_id), (err) => {
+                RetailProducts.updateDescription(newDescription, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -670,7 +679,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
 
             if (type === 'custom') {
-                CustomProducts.updateDescription(value, parseInt(product_id), (err) => {
+                CustomProducts.updateDescription(newDescription, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -678,7 +687,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
 
             if (type === 'digital') {
-                DigitalProducts.updateDescription(value, parseInt(product_id), (err) => {
+                DigitalProducts.updateDescription(newDescription, parseInt(product_id), (err) => {
                     if (err) {
                         res.status(500).json({error: 'database error'})
                     }
@@ -687,7 +696,8 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         }
 
         if (field === 'summary' && product_id) {
-            Books.updateSummary(value, parseInt(product_id), (err) => {
+            const newSummary = validator.escape(value)
+            Books.updateSummary(newSummary, parseInt(product_id), (err) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
                 }
@@ -695,14 +705,15 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         } 
 
         if (field === 'author' && product_id) {
-            Books.updateAuthor(value, parseInt(product_id), (err) => {
+            const newAuthor= validator.escape(value)
+            Books.updateAuthor(newAuthor, parseInt(product_id), (err) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
                 }
             })
         }
 
-        if (field === 'quantity' && product_id) {
+        if (field === 'quantity' && product_id && validator.isNumeric(value)) {
             if (type === 'retail') {
                 RetailProducts.updateQuantity(value, parseInt(product_id), (err) => {
                     if (err) {
@@ -720,7 +731,7 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
         }
 
-        if (field === 'production_time' && product_id) {
+        if (field === 'production_time' && product_id && validator.isNumeric(value)) {
             CustomProducts.updateProductionTime(value, parseInt(product_id), (err) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
@@ -729,7 +740,8 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
         }
 
         if (field === 'path' && product_id) {
-            DigitalProducts.updatePath(value, parseInt(product_id), (err) => {
+            const newPath = validator.escape(value)
+            DigitalProducts.updatePath(newPath, parseInt(product_id), (err) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
                 }
@@ -739,4 +751,55 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
     } catch (error) {
        res.status(500).json({error: 'unexpected server error'}) 
     }
+}
+
+export const deleteProductPhoto = async (req:RequestWithParams, res:Response) => {
+
+    const __filepath = fileURLToPath(import.meta.url)
+    const __dirname = path.dirname(__filepath)
+    const {photo}= req.body
+    const photoName = photo.replace('uploads/product-photos/', '')
+    const fullPath = path.join(__dirname, '../../', photo)
+    console.log('photo:',photoName)
+    console.log('path:', fullPath)
+
+    if (photo) {
+        ProductPhotos.delete(photo, async (err) => {
+            console.log('Inside ProductPhotos.delete callback');
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+                
+                try {                 
+                    console.log('full path:', fullPath)
+                    await asyncUnlink(fullPath)
+                } catch (error) {
+                    res.status(500).json({error: 'unexpected error deleting file'})
+                }
+        })
+    }
+}
+
+export const addProductPhoto = async (req:MulterRequest, res:Response) => {
+
+    const {file} = req
+    const {product_id, product_type} = req.body
+
+    try {
+        if (!file || !product_id || !product_type) {
+            res.status(400).json({error: 'bad request'})
+        } else {
+
+            const path =  `uploads/product-photos/${file.filename}`
+            ProductPhotos.add(path, product_id, product_type, (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                }
+            })
+
+        }
+    } catch (error) {
+        res.status(500).json({error: 'internal server error'})
+    }
+    
 }

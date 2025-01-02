@@ -170,7 +170,7 @@ export type ProductPathData = {
 
 export interface MulterRequest extends Request {
     file?: UploadedFile,
-    files?: Record<string, UploadedFile[]>
+    files?: Record<string, UploadedFile[]>,
 }
 
 export interface RequestWithParams extends Request {
@@ -180,7 +180,8 @@ export interface RequestWithParams extends Request {
         product_id?: string,
         cart_item_id?: string,
         new_cost?: string,
-        new_quantity: string
+        new_quantity: string,
+        photo: string
     }
 }
 

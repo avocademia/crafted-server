@@ -20,7 +20,6 @@ export interface CreateProductData {
     book_condition?: ProductCondition,
     product_condition?: ProductCondition,
 }
-
 export interface RawRP {
     id: number;
     kloset_id: number,
@@ -34,7 +33,6 @@ export interface RawRP {
     sub_category: string,
     product_condition: ProductCondition
 }
-
 export interface FinalRP {
     insertId?: number,
     id: number,
@@ -50,7 +48,6 @@ export interface FinalRP {
     photos: string[],
     type: ProductType
 }
-
 export interface RawCP {
     id: number;
     kloset_id: number,
@@ -63,7 +60,6 @@ export interface RawCP {
     category: Category|null,
     sub_category: string
 }
-
 export interface FinalCP {
     insertId?: number,
     id: number,
@@ -78,7 +74,6 @@ export interface FinalCP {
     photos: string[],
     type: ProductType
 }
-
 export interface RawDP {
     id: number;
     kloset_id: number,
@@ -89,7 +84,6 @@ export interface RawDP {
     path: string,
     photos: string
 }
-
 export interface FinalDP {
     insertId?: number,
     id: number,
@@ -102,7 +96,6 @@ export interface FinalDP {
     photos: string[],
     type: ProductType
 }
-
 export interface RawBook  {
     id: number;
     kloset_id: number;
@@ -116,7 +109,6 @@ export interface RawBook  {
     photos: string;
     genre: string;
 }
-
 export interface FinalBook {
     insertId?: number,
     id: number,
@@ -132,14 +124,12 @@ export interface FinalBook {
     genre: string[],
     type: ProductType
 }
-
 export interface ProductPhotos {
     id?: number,
     product_id?: number,
     product_type: ProductType,
     path: string
 }
-
 export interface GenreTable {
     value: string,
     book?: number
@@ -528,6 +518,26 @@ export const CustomProducts = {
             }
         })
     },
+
+    updateActiveStatus : (active:boolean, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET active = ? WHERE id = ?`
+
+        db.query(sql, [active,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateProductionTime : (production_time:number, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE custom_products SET production_time = ? WHERE id = ?`
+
+        db.query(sql, [production_time,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
 }
 
 export const DigitalProducts = {
@@ -708,6 +718,16 @@ export const DigitalProducts = {
         const sql = `UPDATE digital_products SET path = ? WHERE id = ?`
 
         db.query(sql, [path,id], (err) => {
+            if (err) {
+                return callback(err);
+            }
+        })
+    },
+
+    updateActiveStatus : (active:boolean, id:number, callback:(err:MysqlError|null)=>void) => {
+        const sql = `UPDATE digital_products SET active = ? WHERE id = ?`
+
+        db.query(sql, [active,id], (err) => {
             if (err) {
                 return callback(err);
             }
@@ -966,7 +986,34 @@ export const ProductPhotos = {
             }
             return
         })
-    }
+    },
+
+    add: (path:string, product_id:number, product_type:ProductType, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `INSERT INTO product_photos (
+            product_id,
+            product_type,
+            path
+        ) VALUES ?`
+
+        db.query(sql, [product_id,product_type,path], (err)=> {
+            if (err) {
+                return callback(err)
+            }
+        })
+
+    },
+
+    delete: (path:string, callback:(err:MysqlError|null) => void) => {
+        const sql = `DELETE FROM product_photos WHERE path = ?`
+
+        db.query(sql, path, (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return callback(null)
+        })
+    },
 }
 
 export const BookGenres = {
