@@ -302,16 +302,6 @@ export const RetailProducts = {
         })
     },
 
-    updateCategory : (category:Category, id:number, callback:(err:MysqlError|null)=>void) => {
-        const sql = `UPDATE retail_products SET category = ? WHERE id = ?`
-
-        db.query(sql, [category,id], (err) => {
-            if (err) {
-                return callback(err);
-            }
-        })
-    },
-
     updateSubCategory : (sub_category:string, id:number, callback:(err:MysqlError|null)=>void) => {
         const sql = `UPDATE retail_products SET sub_category = ? WHERE id = ?`
 
@@ -988,20 +978,30 @@ export const ProductPhotos = {
         })
     },
 
-    add: (path:string, product_id:number, product_type:ProductType, callback:(err:MysqlError|null) => void) => {
+    add: (path:string, product_id:number, product_type:ProductType, callback:(err:MysqlError|null, productPhoto:ProductPhotos|null ) => void) => {
 
         const sql = `INSERT INTO product_photos (
             product_id,
             product_type,
             path
-        ) VALUES ?`
+        ) VALUES (?,?,?)`
 
-        db.query(sql, [product_id,product_type,path], (err)=> {
+        db.query(sql, [product_id,product_type,path], (err, response)=> {
             if (err) {
-                return callback(err)
-            }
-        })
+                return callback(err, null)
+            } else {
 
+                const query = `SELECT * FROM product_photos WHERE id = ?`
+
+                db.query(query, response.insertId, (err, productPhoto) => {
+                    if (err) {
+                        return callback(err,null)
+                    }
+                    return callback(null, productPhoto[0])
+                })
+            }
+            
+        })
     },
 
     delete: (path:string, callback:(err:MysqlError|null) => void) => {

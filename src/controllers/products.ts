@@ -786,20 +786,22 @@ export const addProductPhoto = async (req:MulterRequest, res:Response) => {
     const {product_id, product_type} = req.body
 
     try {
-        if (!file || !product_id || !product_type) {
-            res.status(400).json({error: 'bad request'})
-        } else {
 
+        if (file) {
             const path =  `uploads/product-photos/${file.filename}`
-            ProductPhotos.add(path, product_id, product_type, (err) => {
+            ProductPhotos.add(path, parseInt(product_id), product_type, (err,photo) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
                 }
+                
+                if (photo && !err){
+                    res.status(200).json({photo: photo.path})
+                }
             })
-
         }
+
     } catch (error) {
-        res.status(500).json({error: 'internal server error'})
+        res.status(500).json({error: 'unexpected error'})
     }
     
 }

@@ -65,9 +65,11 @@ adminRouter.post('/save-digital-product',verifyTokens, (req:Request,res:Response
 }, sendProductPath )
 adminRouter.post('/delete-digital-product',verifyTokens, deleteDigitalProduct)
 adminRouter.post('/product-photo', verifyTokens, (req,res,next) => {
+
+    console.log(req.body)
     uploadSingleProductPhoto (req,res, (err) => {
         if (err) {
-            res.status(500).json({error: 'error saving image'})
+            res.status(500).json({error: err.message})
         } else {
             next ()
         }

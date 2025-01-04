@@ -24,7 +24,8 @@ export const uploadSingleProductPhoto = multer({
 
         if (!allowedMimeTypes.includes(file.mimetype)) {
             return cb(new Error('Invalid file type. Only images are allowed.'))
-        }  
+        } 
+        console.log('saved')
         cb(null, true)
     }
 }).single('new-photo')
