@@ -113,5 +113,114 @@ export const Kloset = {
             }
             
         })
-    }
+    },
+
+    updateName: (name:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET name =? where id =?`
+
+        db.query(sql, [name,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateSlogan: (slogan:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET slogan =? where id =?`
+
+        db.query(sql, [slogan,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateAddress: (address:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET addrress =? where id =?`
+
+        db.query(sql, [address,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+        
+    },
+
+    updateActiveStatus: (active:boolean, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET active_status =? where id =?`
+
+        db.query(sql, [active,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateDeliveryStatus: (delivery:boolean, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET active_status =? where id =?`
+
+        db.query(sql, [delivery,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateDeliveryTime: (delivery_time:number, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET delivery_time =? where id =?`
+
+        db.query(sql, [delivery_time,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateDP: (dp:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET dp =? where id =?`
+
+        db.query(sql, [dp,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateBanner: (banner:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET banner =? where id =?`
+
+        db.query(sql, [banner,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
+
+    updateStatus: (status:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE kloset SET status = ? WHERE id = ?`
+
+        db.query(sql, [status,kloset_id], (err) => {
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
 }

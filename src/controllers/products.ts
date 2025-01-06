@@ -649,25 +649,6 @@ export const updateProduct = async (req:RequestWithParams, res:Response) => {
             }
         }
 
-        if(field === 'category' && product_id) {
-            const newCategory = validator.escape(value) as Category
-            if (type === 'custom') {
-                CustomProducts.updateCategory(newCategory, parseInt(product_id), (err) => {
-                    if (err) {
-                        res.status(500).json({error: 'database error'})
-                    }
-                })
-            }
-
-            if (type === 'retail') {
-                RetailProducts.updateCategory(newCategory, parseInt(product_id), (err) => {
-                    if (err) {
-                        res.status(500).json({error: 'database error'})
-                    }
-                })
-            }
-        }
-
         if (field === 'description' && product_id) {
             const newDescription = validator.escape(value)
             if (type === 'retail') {

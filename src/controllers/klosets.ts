@@ -5,6 +5,7 @@ import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { Response, Request } from "express"
 import {KlosetStatus} from "../types"
+import { stat } from "fs"
 
 dotenv.config()
 
@@ -186,5 +187,102 @@ export const getAllKlosets = async (req:Request,res:Response) => {
         })
     } catch (error) {
         res.status(500).json({error: 'unexprected server error'})
+    }
+}
+
+export const updateKloset = async (req:Request,res:Response) => {
+
+    const [field, value, kloset_id] = req.body
+
+    const goodRequest = field && value && kloset_id && validator.isNumeric(kloset_id)
+
+    if (!goodRequest) {
+        res.status(400).json({error: 'bad request'})
+    } else {
+        try {
+            
+            if (field === 'name') {
+
+                Kloset.updateName(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (field === 'slogan') {
+                
+                Kloset.updateSlogan(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (field === 'address') {
+
+                Kloset.updateAddress(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (field === 'dp') {
+                
+                Kloset.updateDP(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+            
+            if (field === 'banner') {
+
+                Kloset.updateBanner(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'databse error'})                    }
+                })
+            }
+
+            if (field === 'delivery' && validator.isBoolean(value)) {
+                
+                Kloset.updateDeliveryStatus(value, kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (field === 'active' && validator.isBoolean(value)) {
+
+                Kloset.updateActiveStatus(value, kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'databse error'})
+                    }
+                })
+            }
+
+            if (field === 'delivery_time' && validator.isNumeric(value)) {
+                
+                Kloset.updateDeliveryTime(value, kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+            if (field === 'status') {
+
+                Kloset.updateStatus(validator.escape(value), kloset_id, (err) => {
+                    if (err) {
+                        res.status(500).json({error: 'database error'})
+                    }
+                })
+            }
+
+        } catch (error) {
+            res.status(500).json({error: 'unexpected error'})
+        }
     }
 }
