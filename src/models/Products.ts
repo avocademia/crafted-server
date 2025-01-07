@@ -489,16 +489,6 @@ export const CustomProducts = {
         })
     },
 
-    updateCategory : (category:Category, id:number, callback:(err:MysqlError|null)=>void) => {
-        const sql = `UPDATE custom_products SET category = ? WHERE id = ?`
-
-        db.query(sql, [category,id], (err) => {
-            if (err) {
-                return callback(err);
-            }
-        })
-    },
-
     updateSubCategory : (sub_category:string, id:number, callback:(err:MysqlError|null)=>void) => {
         const sql = `UPDATE custom_products SET sub_category = ? WHERE id = ?`
 
@@ -986,20 +976,11 @@ export const ProductPhotos = {
             path
         ) VALUES (?,?,?)`
 
-        db.query(sql, [product_id,product_type,path], (err, response)=> {
+        db.query(sql, [product_id,product_type,path], (err)=> {
             if (err) {
                 return callback(err, null)
-            } else {
-
-                const query = `SELECT * FROM product_photos WHERE id = ?`
-
-                db.query(query, response.insertId, (err, productPhoto) => {
-                    if (err) {
-                        return callback(err,null)
-                    }
-                    return callback(null, productPhoto[0])
-                })
             }
+            return
             
         })
     },

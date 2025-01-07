@@ -20,7 +20,7 @@ interface DeleteRequestBody {
 
 export const addProduct = async (req:MulterRequest,res:Response) => {
 
-    const {id} = req.params
+    const {kloset_id} = req.params
     if (req.body.type === 'retail') {
 
         const {name,cost,category,sub_category,quantity,description,condition,type} = req.body
@@ -43,7 +43,7 @@ export const addProduct = async (req:MulterRequest,res:Response) => {
                     quantity: quantity,
                     description: validator.escape(description),
                     product_condition: condition as ProductCondition,
-                    kloset_id: parseInt(id),
+                    kloset_id: parseInt(kloset_id),
                     sold_out: false
                 }
     
@@ -108,7 +108,7 @@ export const addProduct = async (req:MulterRequest,res:Response) => {
                     sub_category: sanitizedSubCategory,
                     production_time: parseInt(sanitizedProductionTime),
                     description: sanitizedDescription,
-                    kloset_id: parseInt(id),
+                    kloset_id: parseInt(kloset_id),
                     active: true
                 }
     
@@ -162,7 +162,7 @@ export const addProduct = async (req:MulterRequest,res:Response) => {
                     cost: parseFloat(cost),
                     path: validator.escape(path),
                     description: validator.escape(description),
-                    kloset_id: parseInt(id),
+                    kloset_id: parseInt(kloset_id),
                     active: true
                 }
     
@@ -228,7 +228,7 @@ export const addProduct = async (req:MulterRequest,res:Response) => {
                     summary: validator.escape(summary),
                     book_condition: condition as ProductCondition,
                     quantity: quantity,
-                    kloset_id: parseInt(id),
+                    kloset_id: parseInt(kloset_id),
                     author: validator.escape(author),
                     sold_out: false,
                 }
@@ -770,13 +770,11 @@ export const addProductPhoto = async (req:MulterRequest, res:Response) => {
 
         if (file) {
             const path =  `uploads/product-photos/${file.filename}`
-            ProductPhotos.add(path, parseInt(product_id), product_type, (err,photo) => {
+            ProductPhotos.add(path, parseInt(product_id), product_type, (err) => {
                 if (err) {
                     res.status(500).json({error: 'database error'})
-                }
-                
-                if (photo && !err){
-                    res.status(200).json({photo: photo.path})
+                } else {
+                    res.status(200).json({path})
                 }
             })
         }

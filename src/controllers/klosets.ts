@@ -4,7 +4,7 @@ import { RetailProducts, DigitalProducts, CustomProducts, Books } from "../model
 import jwt, { JwtPayload, Secret } from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { Response, Request } from "express"
-import {KlosetStatus} from "../types"
+import {KlosetStatus, RequestWithParams} from "../types"
 import { stat } from "fs"
 
 dotenv.config()
@@ -91,7 +91,7 @@ export const klosetsByUserId = async (req: Request, res: Response) => {
 }
 
 export const fetchSingleKloset = async (req:Request, res:Response) => {
-    const {id} = req.params
+    const {kloset_id} = req.params
     
     try {
 
@@ -228,23 +228,6 @@ export const updateKloset = async (req:Request,res:Response) => {
                 })
             }
 
-            if (field === 'dp') {
-                
-                Kloset.updateDP(validator.escape(value), kloset_id, (err) => {
-                    if (err) {
-                        res.status(500).json({error: 'database error'})
-                    }
-                })
-            }
-            
-            if (field === 'banner') {
-
-                Kloset.updateBanner(validator.escape(value), kloset_id, (err) => {
-                    if (err) {
-                        res.status(500).json({error: 'databse error'})                    }
-                })
-            }
-
             if (field === 'delivery' && validator.isBoolean(value)) {
                 
                 Kloset.updateDeliveryStatus(value, kloset_id, (err) => {
@@ -285,4 +268,58 @@ export const updateKloset = async (req:Request,res:Response) => {
             res.status(500).json({error: 'unexpected error'})
         }
     }
+}
+
+export const updateKlosetBanner = async (req:RequestWithParams, res:Response) => {
+
+    const {kloset_id} = req.params
+    const {file} = req
+
+    if (file && kloset_id && validator.isNumeric(kloset_id)) {
+        const path = `uploads/kloset-banners/${file.filename}`
+
+        try {
+
+            Kloset.updateBanner(path, parseInt(kloset_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                } else {
+                    res.status(200).json({path})
+                }
+            })
+
+        } catch (error) {
+            res.status(500).json({error: 'unexpected error'})
+        }
+    } else {
+        res.status(400).json({error: 'bad request'})
+    }
+    
+}
+
+export const updateKlosetDP = async (req:RequestWithParams, res:Response) => {
+
+    const {kloset_id} = req.params
+    const {file} = req
+
+    if (file && kloset_id && validator.isNumeric(kloset_id)) {
+        const path = `uploads/kloset-dps/${file.filename}`
+
+        try {
+
+            Kloset.updateDP(path, parseInt(kloset_id), (err) => {
+                if (err) {
+                    res.status(500).json({error: 'database error'})
+                } else {
+                    res.status(200).json(path)
+                }
+            })
+            
+        } catch (error) {
+            res.status(500).json({error: 'unexpected error'})
+        }
+    } else {
+        res.status(400).json({error: 'bad request'})
+    }
+    
 }
