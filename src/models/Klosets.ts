@@ -141,7 +141,7 @@ export const Kloset = {
 
     updateAddress: (address:string, kloset_id:number, callback:(err:MysqlError|null) => void) => {
 
-        const sql = `UPDATE kloset SET addrress =? WHERE id =?`
+        const sql = `UPDATE kloset SET address =? WHERE id =?`
 
         db.query(sql, [address,kloset_id], (err) => {
             if (err) {

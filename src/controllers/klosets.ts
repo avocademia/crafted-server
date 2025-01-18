@@ -95,7 +95,7 @@ export const fetchSingleKloset = async (req:Request, res:Response) => {
     
     try {
 
-        Kloset.findKlosetById(parseInt(id), (err, kloset) => {
+        Kloset.findKlosetById(parseInt(kloset_id), (err, kloset) => {
 
             if (err) {
                 res.status(500).json({error: err.message})
@@ -192,13 +192,10 @@ export const getAllKlosets = async (req:Request,res:Response) => {
 
 export const updateKloset = async (req:Request,res:Response) => {
 
-    const [field, value, kloset_id] = req.body
+    const {field, value, kloset_id} = req.body
 
-    const goodRequest = field && value && kloset_id && validator.isNumeric(kloset_id)
+    const goodRequest = field && value && kloset_id ? true: false
 
-    if (!goodRequest) {
-        res.status(400).json({error: 'bad request'})
-    } else {
         try {
             
             if (field === 'name') {
@@ -223,7 +220,7 @@ export const updateKloset = async (req:Request,res:Response) => {
 
                 Kloset.updateAddress(validator.escape(value), kloset_id, (err) => {
                     if (err) {
-                        res.status(500).json({error: 'database error'})
+                        res.status(500).json({error: err.message})
                     }
                 })
             }
@@ -267,7 +264,6 @@ export const updateKloset = async (req:Request,res:Response) => {
         } catch (error) {
             res.status(500).json({error: 'unexpected error'})
         }
-    }
 }
 
 export const updateKlosetBanner = async (req:RequestWithParams, res:Response) => {
@@ -301,6 +297,9 @@ export const updateKlosetDP = async (req:RequestWithParams, res:Response) => {
 
     const {kloset_id} = req.params
     const {file} = req
+
+    console.log(req.file)
+    console.log(req.params)
 
     if (file && kloset_id && validator.isNumeric(kloset_id)) {
         const path = `uploads/kloset-dps/${file.filename}`

@@ -739,20 +739,15 @@ export const deleteProductPhoto = async (req:RequestWithParams, res:Response) =>
     const __filepath = fileURLToPath(import.meta.url)
     const __dirname = path.dirname(__filepath)
     const {photo}= req.body
-    const photoName = photo.replace('uploads/product-photos/', '')
     const fullPath = path.join(__dirname, '../../', photo)
-    console.log('photo:',photoName)
-    console.log('path:', fullPath)
 
     if (photo) {
         ProductPhotos.delete(photo, async (err) => {
-            console.log('Inside ProductPhotos.delete callback');
             if (err) {
                 res.status(500).json({error: 'database error'})
             }
                 
                 try {                 
-                    console.log('full path:', fullPath)
                     await asyncUnlink(fullPath)
                 } catch (error) {
                     res.status(500).json({error: 'unexpected error deleting file'})
@@ -783,4 +778,78 @@ export const addProductPhoto = async (req:MulterRequest, res:Response) => {
         res.status(500).json({error: 'unexpected error'})
     }
     
+}
+
+export const deleteProduct = async (req:RequestWithParams, res:Response) => {
+
+    const {product_id, type} = req.params
+
+    if (product_id && type) {
+        ProductPhotos.fetchByProduct(parseInt(product_id), type, (err,photos) => {
+
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+
+            if (photos && !err) {
+                photos.shift()
+
+                photos.map(photo => {
+
+                    const __filepath = fileURLToPath(import.meta.url)
+                    const __dirname = path.dirname(__filepath)
+                    const fullPath = path.join(__dirname, '../../', photo)
+
+                    const unlink = async () => {
+                        try {                 
+                            await asyncUnlink(fullPath)
+                        } catch (error) {
+                            res.status(500).json({error: 'unexpected error deleting file'})
+                        }
+                    }
+                    unlink()
+
+                    ProductPhotos.delete(photo, async (err) => {
+                        if (err) {
+                            res.status(500).json({error: 'database error'})
+                        }
+                    })
+                    
+                })
+            }
+        })
+    }
+
+    if (type === 'retail' && product_id) {
+        RetailProducts.delete(parseInt(product_id), (err) => {
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+        })
+    }
+
+    if (type === 'custom' && product_id) {
+        CustomProducts.delete(parseInt(product_id), (err) => {
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+        })
+    }
+
+    if (type === 'digital' && product_id) {
+        DigitalProducts.delete(parseInt(product_id), (err) => {
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+        })
+    }
+
+    if (type === 'books' && product_id) {
+        Books.delete(parseInt(product_id), (err) => {
+            if (err) {
+                res.status(500).json({error: 'database error'})
+            }
+        })
+    }
+
 }

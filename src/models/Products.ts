@@ -135,7 +135,6 @@ export interface GenreTable {
     book?: number
 }
 
-
 export const RetailProducts = {
     
     create: (productData: CreateProductData, callback:(err:MysqlError|null, product: FinalRP|null) => void) => {
@@ -162,10 +161,10 @@ export const RetailProducts = {
         const sql = `SELECT rp.*, pp.path AS photos
                      FROM retail_products rp
                      LEFT JOIN product_photos pp ON rp.id = pp.product_id
-                     WHERE rp.kloset_id =? AND pp.product_type = 'retail'
+                     WHERE rp.kloset_id =? AND rp.deleted = ? AND pp.product_type = 'retail'
                     `
         
-        db.query(sql,[kloset_id], (err,result:RawRP[]) => {
+        db.query(sql,[kloset_id, false], (err,result:RawRP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -250,12 +249,12 @@ export const RetailProducts = {
                     GROUP_CONCAT(DISTINCT pp.path) AS photos 
                     FROM retail_products p
                     LEFT JOIN product_photos pp ON p.id = pp.product_id
-                    WHERE pp.product_type = 'retail'
+                    WHERE pp.product_type = 'retail' AND p.deleted = ?
                     GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
                     p.quantity, p.sold_out, p.category, p.sub_category, p.product_condition
                     `
         
-        db.query(sql, (err: MysqlError|null, rawProducts: RawRP[]|null) => {
+        db.query(sql, [false], (err: MysqlError|null, rawProducts: RawRP[]|null) => {
             if (err) {
                 return callback(err,null)
             }
@@ -321,6 +320,19 @@ export const RetailProducts = {
             }
         })
     },
+
+    delete: (product_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE retail_products SET deleted = ? WHERE id = ?`
+
+        db.query(sql, [true, product_id], (err) => {
+
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
 }
 
 export const CustomProducts = {
@@ -350,10 +362,10 @@ export const CustomProducts = {
         const sql = `SELECT cp.*, pp.path AS photos
                      FROM custom_products cp
                      LEFT JOIN product_photos pp ON cp.id = pp.product_id
-                     WHERE cp.kloset_id =? AND pp.product_type = 'custom'
+                     WHERE cp.kloset_id =? AND cp.deleted = ? AND pp.product_type = 'custom'
                     `
         
-        db.query(sql,[kloset_id], (err,result:RawCP[]) => {
+        db.query(sql,[kloset_id, false], (err,result:RawCP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -437,12 +449,12 @@ export const CustomProducts = {
                     GROUP_CONCAT(DISTINCT pp.path) AS photos 
                     FROM custom_products p
                     LEFT JOIN product_photos pp ON p.id = pp.product_id
-                    WHERE pp.product_type = 'custom'
+                    WHERE pp.product_type = 'custom' AND p.deleted = ?
                     GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
                     p.production_time, p.active, p.category, p.sub_category
                     `
         
-        db.query(sql, (err: MysqlError|null, rawProducts: RawCP[]|null) => {
+        db.query(sql, [false], (err: MysqlError|null, rawProducts: RawCP[]|null) => {
             if (err) {
                 callback(err,null)
             }
@@ -518,6 +530,19 @@ export const CustomProducts = {
             }
         })
     },
+
+    delete: (product_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE custom_products SET deleted = ? WHERE id = ?`
+
+        db.query(sql, [true, product_id], (err) => {
+
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
 }
 
 export const DigitalProducts = {
@@ -558,10 +583,10 @@ export const DigitalProducts = {
         const sql = `SELECT dp.*, pp.path AS photos
                      FROM digital_products dp
                      LEFT JOIN product_photos pp ON dp.id = pp.product_id
-                     WHERE dp.kloset_id =? AND pp.product_type = 'digital'
+                     WHERE dp.kloset_id =? AND dp.deleted = ? AND pp.product_type = 'digital'
                     `
         
-        db.query(sql,[kloset_id], (err,result: RawDP[]) => {
+        db.query(sql,[kloset_id, false], (err,result: RawDP[]) => {
             if (err) {
                 return callback(err,null)
             }
@@ -642,12 +667,12 @@ export const DigitalProducts = {
                     GROUP_CONCAT(DISTINCT pp.path) AS photos 
                     FROM digital_products p
                     LEFT JOIN product_photos pp ON p.id = pp.product_id
-                    WHERE pp.product_type = 'digital'
+                    WHERE pp.product_type = 'digital' AND p.deleted = ?
                     GROUP BY p.id, p.name, p.description, p.cost, p.kloset_id, 
                     p.active, p.path
                     `
         
-        db.query(sql, (err: MysqlError|null, rawProducts: RawDP[]|null) => {
+        db.query(sql, [false], (err: MysqlError|null, rawProducts: RawDP[]|null) => {
             if (err) {
                 callback(err,null)
             }
@@ -713,6 +738,19 @@ export const DigitalProducts = {
             }
         })
     },
+
+    delete: (product_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE digital_products SET deleted = ? WHERE id = ?`
+
+        db.query(sql, [true, product_id], (err) => {
+
+            if (err) {
+                return callback(err)
+            }
+            return
+        })
+    },
 }
 
 export const Books = {
@@ -744,10 +782,10 @@ export const Books = {
                      FROM books b
                      LEFT JOIN book_genres bg on b.id = bg.book
                      LEFT JOIN product_photos pp ON b.id = pp.product_id
-                     WHERE b.kloset_id = ? AND pp.product_type = 'books'
+                     WHERE b.kloset_id = ? AND b.deleted = ? AND pp.product_type = 'books'
                      `
         
-        db.query(sql,[kloset_id], (err,result:RawBook[]) => {
+        db.query(sql,[kloset_id, false], (err,result:RawBook[]) => {
             if (err) {
             return callback(err,null)
             }
@@ -837,12 +875,12 @@ export const Books = {
                     FROM books b
                     LEFT JOIN product_photos pp ON b.id = pp.product_id
                     LEFT JOIN book_genres bg ON b.id = bg.book
-                    WHERE pp.product_type = 'books'
+                    WHERE pp.product_type = 'books' AND b.deleted = ?
                     GROUP BY b.id, b.name, b.author, b.summary, b.cost, b.kloset_id, 
                     b.sold_out, b.book_condition, b.quantity
                     `
         
-        db.query(sql, (err: MysqlError|null, rawProducts: RawBook[]|null) => {
+        db.query(sql, [true], (err: MysqlError|null, rawProducts: RawBook[]|null) => {
             if (err) {
                 callback(err,null)
             }
@@ -880,7 +918,7 @@ export const Books = {
     },
 
     updateQuantity : (quantity:number, id:number, callback:(err:MysqlError|null)=>void) => {
-        const sql = `UPDATE retail_products SET quantity = ? WHERE id = ?`
+        const sql = `UPDATE books SET quantity = ? WHERE id = ?`
 
         db.query(sql, [quantity,id], (err) => {
             if (err) {
@@ -906,6 +944,19 @@ export const Books = {
             if (err) {
                 return callback(err);
             }
+        })
+    },
+
+    delete: (product_id:number, callback:(err:MysqlError|null) => void) => {
+
+        const sql = `UPDATE books SET deleted = ? WHERE id = ?`
+
+        db.query(sql, [true, product_id], (err) => {
+
+            if (err) {
+                return callback(err)
+            }
+            return
         })
     },
 }
@@ -995,6 +1046,22 @@ export const ProductPhotos = {
             return callback(null)
         })
     },
+
+    fetchByProduct: (product_id:number, product_type:ProductType, callback:(err:MysqlError|null, photos:string[]|null) => void) => {
+
+        const sql = `SELECT * FROM product_photos WHERE product_id = ? AND product_type= ?`
+
+        db.query(sql, [product_id, product_type], (err,photos) => {
+
+            if (err) {
+                return callback(err,null)
+            }
+
+            if (photos && !err) {
+                return callback(null,photos)
+            }
+        })
+    }
 }
 
 export const BookGenres = {

@@ -7,6 +7,6 @@ const publicRouter = express.Router()
 publicRouter.get('/shop', getAllProducts)
 publicRouter.get('/klosets', getAllKlosets)
 publicRouter.get('/product/:product_id&:type', getSingleProduct)
-publicRouter.get('/kloset/:id', fetchSingleKloset)
+publicRouter.get('/kloset/:kloset_id', fetchSingleKloset)
 
 export default publicRouter
